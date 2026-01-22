@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Control de Salón - Sistema Soluna">
+    <meta name="author" content="">
+
+    <title>Soluna - Control de Salón</title>
+
+    <!-- Custom fonts for this template -->
+    <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link
+        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+        rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="css/sb-admin-2.min.css" rel="stylesheet">
+
+    <style>
+        /* Estilos personalizados para control de mesas */
+        .mesa-card {
+            border: 3px solid #e3e6f0;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .mesa-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .mesa-card.libre {
+            background: #d1f2eb;
+            border-color: #1cc88a;
+        }
+        
+        .mesa-card.ocupada {
+            background: #fff3cd;
+            border-color: #f6c23e;
+        }
+        
+        .mesa-card.reservada {
+            background: #cfe2ff;
+            border-color: #4e73df;
+        }
+        
+        .mesa-card.mantenimiento {
+            background: #f8d7da;
+            border-color: #e74a3b;
+        }
+        
+        .mesa-numero {
+            font-size: 3rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .mesa-capacidad {
+            font-size: 0.9rem;
+            color: #858796;
+        }
+        
+        .mesa-tiempo {
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+        
+        .leyenda-item {
+            display: inline-block;
+            margin: 5px 15px;
+        }
+        
+        .leyenda-color {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+    </style>
+
+</head>
+
+<body id="page-top">
+
+    <!-- Page Wrapper -->
+    <div id="wrapper">
+
+        <!-- Sidebar -->
+        <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+            <!-- Sidebar - Brand -->
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
+                <div class="sidebar-brand-icon">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                <div class="sidebar-brand-text mx-3">SOLUNA</div>
+            </a>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider my-0">
+
+            <!-- Nav Item - Dashboard -->
+            <li class="nav-item">
+                <a class="nav-link" href="index.html">
+                    <i class="fas fa-fw fa-tachometer-alt"></i>
+                    <span>Dashboard</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Gestión de Pedidos
+            </div>
+
+            <!-- Nav Item - Pedidos -->
+            <li class="nav-item">
+                <a class="nav-link" href="pedidos.html">
+                    <i class="fas fa-fw fa-clipboard-list"></i>
+                    <span>Pedidos</span></a>
+            </li>
+
+            <!-- Nav Item - Menú -->
+            <li class="nav-item">
+                <a class="nav-link" href="menu.html">
+                    <i class="fas fa-fw fa-book-open"></i>
+                    <span>Menú</span></a>
+            </li>
+
+            <!-- Nav Item - Mesas (ACTIVO) -->
+            <li class="nav-item active">
+                <a class="nav-link" href="mesas.html">
+                    <i class="fas fa-fw fa-chair"></i>
+                    <span>Control de Salón</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Operaciones
+            </div>
+
+            <!-- Nav Item - Caja -->
+            <li class="nav-item">
+                <a class="nav-link" href="caja.html">
+                    <i class="fas fa-fw fa-cash-register"></i>
+                    <span>Caja</span></a>
+            </li>
+
+            <!-- Nav Item - Cocina -->
+            <li class="nav-item">
+                <a class="nav-link" href="cocina.html">
+                    <i class="fas fa-fw fa-fire"></i>
+                    <span>Cocina</span></a>
+            </li>
+
+            <!-- Nav Item - Inventario -->
+            <li class="nav-item">
+                <a class="nav-link" href="inventario.html">
+                    <i class="fas fa-fw fa-boxes"></i>
+                    <span>Inventario</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider">
+
+            <!-- Heading -->
+            <div class="sidebar-heading">
+                Administración
+            </div>
+
+            <!-- Nav Item - Usuarios -->
+            <li class="nav-item">
+                <a class="nav-link" href="usuarios.html">
+                    <i class="fas fa-fw fa-users"></i>
+                    <span>Usuarios</span></a>
+            </li>
+
+            <!-- Nav Item - Reportes -->
+            <li class="nav-item">
+                <a class="nav-link" href="reportes.html">
+                    <i class="fas fa-fw fa-chart-bar"></i>
+                    <span>Reportes</span></a>
+            </li>
+
+            <!-- Divider -->
+            <hr class="sidebar-divider d-none d-md-block">
+
+            <!-- Sidebar Toggler (Sidebar) -->
+            <div class="text-center d-none d-md-inline">
+                <button class="rounded-circle border-0" id="sidebarToggle"></button>
+            </div>
+
+        </ul>
+        <!-- End of Sidebar -->
+
+        <!-- Content Wrapper -->
+        <div id="content-wrapper" class="d-flex flex-column">
+
+            <!-- Main Content -->
+            <div id="content">
+
+                <!-- Topbar -->
+                <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+
+                    <!-- Sidebar Toggle (Topbar) -->
+                    <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3">
+                        <i class="fa fa-bars"></i>
+                    </button>
+
+                    <!-- Topbar Title -->
+                    <h4 class="mb-0 text-gray-800 mr-auto">
+                        <i class="fas fa-chair text-primary"></i> Control de Salón
+                    </h4>
+
+                    <!-- Topbar Navbar -->
+                    <ul class="navbar-nav ml-auto">
+
+                        <!-- Estadísticas Rápidas -->
+                        <li class="nav-item mx-2">
+                            <span class="nav-link">
+                                <i class="fas fa-check-circle text-success"></i>
+                                <span class="badge badge-success" id="mesasLibres">0</span>
+                                <span class="d-none d-sm-inline ml-1">Libres</span>
+                            </span>
+                        </li>
+
+                        <li class="nav-item mx-2">
+                            <span class="nav-link">
+                                <i class="fas fa-utensils text-warning"></i>
+                                <span class="badge badge-warning" id="mesasOcupadas">0</span>
+                                <span class="d-none d-sm-inline ml-1">Ocupadas</span>
+                            </span>
+                        </li>
+
+                        <div class="topbar-divider d-none d-sm-block"></div>
+
+                        <!-- Nav Item - User Information -->
+                        <li class="nav-item dropdown no-arrow">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small" id="userName">Mesero</span>
+                                <img class="img-profile rounded-circle"
+                                    src="img/undraw_profile.svg">
+                            </a>
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                                aria-labelledby="userDropdown">
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Perfil
+                                </a>
+                                <a class="dropdown-item" href="#">
+                                    <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Configuración
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
+                                    <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
+                                    Cerrar Sesión
+                                </a>
+                            </div>
+                        </li>
+
+                    </ul>
+
+                </nav>
+                <!-- End of Topbar -->
+
+                <!-- Begin Page Content -->
+                <div class="container-fluid">
+
+                    <!-- Leyenda de Estados -->
+                    <div class="card shadow mb-4">
+                        <div class="card-body text-center">
+                            <div class="leyenda-item">
+                                <span class="leyenda-color" style="background: #d1f2eb; border: 2px solid #1cc88a;"></span>
+                                <strong>Libre</strong>
+                            </div>
+                            <div class="leyenda-item">
+                                <span class="leyenda-color" style="background: #fff3cd; border: 2px solid #f6c23e;"></span>
+                                <strong>Ocupada</strong>
+                            </div>
+                            <div class="leyenda-item">
+                                <span class="leyenda-color" style="background: #cfe2ff; border: 2px solid #4e73df;"></span>
+                                <strong>Reservada</strong>
+                            </div>
+                            <div class="leyenda-item">
+                                <span class="leyenda-color" style="background: #f8d7da; border: 2px solid #e74a3b;"></span>
+                                <strong>Mantenimiento</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="row mb-4">
+                        <div class="col-lg-3 col-md-6 mb-2">
+                            <select class="form-control" id="filtroEstado">
+                                <option value="">Todas las mesas</option>
+                                <option value="libre">Libres</option>
+                                <option value="ocupada">Ocupadas</option>
+                                <option value="reservada">Reservadas</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-2">
+                            <select class="form-control" id="filtroUbicacion">
+                                <option value="">Todas las ubicaciones</option>
+                                <option value="Salón principal">Salón Principal</option>
+                                <option value="Terraza">Terraza</option>
+                                <option value="Área VIP">Área VIP</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-6 col-md-12 text-right">
+                            <button class="btn btn-primary" onclick="actualizarMesas()">
+                                <i class="fas fa-sync-alt"></i> Actualizar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Grid de Mesas -->
+                    <div class="row" id="gridMesas">
+                        <!-- Se llena dinámicamente -->
+                    </div>
+
+                </div>
+                <!-- /.container-fluid -->
+
+            </div>
+            <!-- End of Main Content -->
+
+            <!-- Footer -->
+            <footer class="sticky-footer bg-white">
+                <div class="container my-auto">
+                    <div class="copyright text-center my-auto">
+                        <span>Copyright &copy; Restaurante Soluna 2024</span>
+                    </div>
+                </div>
+            </footer>
+            <!-- End of Footer -->
+
+        </div>
+        <!-- End of Content Wrapper -->
+
+    </div>
+    <!-- End of Page Wrapper -->
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
+
+    <!-- Logout Modal-->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">¿Cerrar Sesión?</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">Selecciona "Cerrar Sesión" si deseas terminar tu sesión actual.</div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                    <a class="btn btn-primary" href="login.html">Cerrar Sesión</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalle de Mesa -->
+    <div class="modal fade" id="detalleMesaModal" tabindex="-1" role="dialog" aria-labelledby="detalleMesaLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="detalleMesaLabel">Detalle de Mesa</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="detalleMesaContent">
+                    <!-- Se llena dinámicamente -->
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cerrar</button>
+                    <button class="btn btn-success" type="button" id="btnOcuparMesa" style="display:none;">
+                        <i class="fas fa-user-plus"></i> Ocupar Mesa
+                    </button>
+                    <button class="btn btn-primary" type="button" id="btnNuevoPedido" style="display:none;">
+                        <i class="fas fa-plus"></i> Nuevo Pedido
+                    </button>
+                    <button class="btn btn-warning" type="button" id="btnLiberarMesa" style="display:none;">
+                        <i class="fas fa-check"></i> Liberar Mesa
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ocupar Mesa -->
+    <div class="modal fade" id="ocuparMesaModal" tabindex="-1" role="dialog" aria-labelledby="ocuparMesaLabel"
+        aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="ocuparMesaLabel">Ocupar Mesa</h5>
+                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="formOcuparMesa">
+                        <input type="hidden" id="mesaIdOcupar">
+                        
+                        <div class="form-group">
+                            <label for="nombreCliente">Nombre del Cliente</label>
+                            <input type="text" class="form-control" id="nombreClienteOcupar" 
+                                   placeholder="Ej: Juan Pérez" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="numeroPersonas">Número de Personas</label>
+                            <input type="number" class="form-control" id="numeroPersonas" 
+                                   min="1" max="12" placeholder="4" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="telefonoCliente">Teléfono (Opcional)</label>
+                            <input type="tel" class="form-control" id="telefonoCliente" 
+                                   placeholder="8888-8888">
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
+                    <button class="btn btn-success" type="button" id="btnConfirmarOcupar">
+                        Ocupar Mesa
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core plugin JavaScript-->
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- Custom scripts for all pages-->
+    <script src="js/sb-admin-2.min.js"></script>
+
+    <!-- Script personalizado para mesas -->
+    <script src="js/mesas.js"></script>
+
+</body>
+
+</html>
