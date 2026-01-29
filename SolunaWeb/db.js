@@ -1,6 +1,7 @@
 const sql = require('mssql/msnodesqlv8');
 
 const config = {
+    //Para conectar a la base de datos cambiar el Server por el nombre de la maquina
     connectionString: 'Driver={ODBC Driver 17 for SQL Server};Server=Je-PC;Database=SolunaDB;Trusted_Connection=yes;'
 };
 
