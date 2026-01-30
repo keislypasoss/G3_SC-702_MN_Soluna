@@ -1,13 +1,17 @@
 $(document).ready(function () {
+    console.log('Script cargado correctamente');
     // tener el token de la url
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
+    console.log('Token obtenido de la URL:', token);
+    console.log('URL completa:', window.location.search);
 
     if (!token) {
+        console.log('No hay token en la URL');
         mostrarError('No se proporcionó un token válido');
         return;
     }
-
+     console.log('Token válido, verificando...');
     // hacer la verificacion de que el token sea valido
     verificarToken(token);
 
@@ -82,7 +86,7 @@ $(document).ready(function () {
                     text: 'La contraseña ha sido restablecida correctamente',
                     confirmButtonText: 'Ir a iniciar sesión'
                 }).then(() => {
-                    window.location.href = 'index.html';
+                    window.location.href = 'login.html';
                 });
             },
             error: function (err) {
@@ -96,23 +100,29 @@ $(document).ready(function () {
     });
 
     // funciones auxiliares
-    function verificarToken(token) {
-        $.ajax({
-            url: `/api/verificar-token/${token}`,
-            method: 'GET',
-            success: function (response) {
-                if (response.valid) {
-                    $('#mensajeBienvenida').text(`Hola ${response.usuario}, crea tu nueva contraseña`);
-                    $('#formularioContainer').show();
-                } else {
-                    mostrarError(response.error);
-                }
-            },
-            error: function (err) {
-                mostrarError(err.responseJSON?.error || 'El enlace es inválido o ha expirado');
+function verificarToken(token) {
+    $.ajax({
+        url: `/api/verificar-token/${token}`,
+        method: 'GET',
+        success: function (response) {
+            // Token válido → mostramos el formulario
+            if (response.valid === true) {
+                $('#mensajeBienvenida').text(
+                    `Hola ${response.usuario}, crea tu nueva contraseña`
+                );
+                $('#formularioContainer').show();
+                $('#errorContainer').hide();
+            } else {
+                mostrarError(response.error || 'El enlace es inválido o ha expirado');
             }
-        });
-    }
+        },
+        error: function (err) {
+            mostrarError(
+                err.responseJSON?.error || 'El enlace es inválido o ha expirado'
+            );
+        }
+    });
+}
 
     function mostrarError(mensaje) {
         $('#mensajeError').text(mensaje);

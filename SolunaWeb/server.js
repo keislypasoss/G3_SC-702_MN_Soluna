@@ -124,11 +124,6 @@ app.delete('/api/usuarios/:id', async (req, res) => {
     }
 });
 
-// Fallback to index.html for any other requests (SPA behavior if needed, or just 404)
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
 // Start server and connect to DB
 app.listen(PORT, async () => {
     console.log(`Server is running on http://localhost:${PORT}`);
@@ -278,4 +273,9 @@ app.post('/api/restablecer-password', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+// Fallback to index.html for any other requests (SPA behavior if needed, or just 404)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

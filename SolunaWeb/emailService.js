@@ -2,11 +2,17 @@ const nodemailer = require('nodemailer');
 
 // transportador de email
 // hay que cambiar estos valores por las credenciales reales
+// pasos para crear la contra de aplicacion de gmail
+// PASO 1 Ve a tu cuenta de Google
+// PASO 2 Activa la verificación en 2 pasos
+// PASO 3 Ve a: https://myaccount.google.com/apppasswords
+// PASO 4 Genera la contraseña de aplicación para "Correo"
+// y esa contra que te genera ponerla aca 
 const transporter = nodemailer.createTransport({
     service: 'gmail', // Puedes usar: gmail, outlook, yahoo, etc.
     auth: {
         user: 'mdeeshbb.0330@gmail.com', // Tu correo
-        pass: 'ryzxiahjxuryinba' // Contraseña de aplicación de Gmail
+        pass: '' // Contraseña de aplicación de Gmail
     }
 });
 
