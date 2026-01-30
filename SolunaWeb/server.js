@@ -138,3 +138,144 @@ app.listen(PORT, async () => {
         console.error('Failed to connect to DB on startup:', err.message);
     }
 });
+
+const crypto = require('crypto');
+const { enviarEmailRecuperacion } = require('./emailService');
+
+// Solicitar la recuperación de la contra
+app.post('/api/recuperar-password', async (req, res) => {
+    try {
+        const { correo } = req.body;
+        const pool = await getConnection();
+
+        // revisar si el usuario si existe
+        const userResult = await pool.request()
+            .input('correo', sql.NVarChar, correo)
+            .query('SELECT id_usuario, nombre_completo, estado FROM Usuarios WHERE correo = @correo');
+
+        if (userResult.recordset.length === 0) {
+            // no revelamos si el email existe por temas de segu
+            return res.json({ 
+                success: true, 
+                message: 'Si tu correo existe, vas a recibir las instrucciones para recuperar tu contraseña.' 
+            });
+        }
+
+        const usuario = userResult.recordset[0];
+
+        // revisar que el usuario esté activo
+        if (!usuario.estado) {
+            return res.status(400).json({ 
+                error: 'Esta cuenta está desactivada, Por favor ponte en contacto con el administrador.' 
+            });
+        }
+
+        // crear el token en este caso unico 
+        const token = crypto.randomBytes(32).toString('hex');
+        const fechaExpiracion = new Date();
+        fechaExpiracion.setHours(fechaExpiracion.getHours() + 1); // Expira en 1 hora de tiempo
+
+        // guardar ese token en la base de datos 
+        await pool.request()
+            .input('id_usuario', sql.Int, usuario.id_usuario)
+            .input('token', sql.NVarChar, token)
+            .input('fecha_expiracion', sql.DateTime, fechaExpiracion)
+            .query(`
+                INSERT INTO Tokens_Recuperacion (id_usuario, token, fecha_expiracion, usado)
+                VALUES (@id_usuario, @token, @fecha_expiracion, 0)
+            `);
+
+        // enviar el email
+        await enviarEmailRecuperacion(correo, token, usuario.nombre_completo);
+
+        res.json({ 
+            success: true, 
+            message: 'Se te envio un correo con las instrucciones para recuperar tu contraseña.' 
+        });
+
+    } catch (err) {
+        console.error('Error en recuperación:', err);
+        res.status(500).json({ error: 'Error al procesar la solicitud' });
+    }
+});
+
+// verificacion del token de recuperacion 
+app.get('/api/verificar-token/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+        const pool = await getConnection();
+
+        const result = await pool.request()
+            .input('token', sql.NVarChar, token)
+            .query(`
+                SELECT t.*, u.nombre_completo, u.correo
+                FROM Tokens_Recuperacion t
+                INNER JOIN Usuarios u ON t.id_usuario = u.id_usuario
+                WHERE t.token = @token 
+                  AND t.usado = 0 
+                  AND t.fecha_expiracion > GETDATE()
+            `);
+
+        if (result.recordset.length === 0) {
+            return res.status(400).json({ 
+                valid: false, 
+                error: 'El enlace es inválido o ha expirado' 
+            });
+        }
+
+        res.json({ 
+            valid: true, 
+            usuario: result.recordset[0].nombre_completo 
+        });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// restablecimiento de la contra con el token
+app.post('/api/restablecer-password', async (req, res) => {
+    try {
+        const { token, nuevaPassword } = req.body;
+        const pool = await getConnection();
+
+        // revisar otra vez el token
+        const tokenResult = await pool.request()
+            .input('token', sql.NVarChar, token)
+            .query(`
+                SELECT id_usuario 
+                FROM Tokens_Recuperacion 
+                WHERE token = @token 
+                  AND usado = 0 
+                  AND fecha_expiracion > GETDATE()
+            `);
+
+        if (tokenResult.recordset.length === 0) {
+            return res.status(400).json({ 
+                error: 'El enlace es inválido o ha expirado' 
+            });
+        }
+
+        const idUsuario = tokenResult.recordset[0].id_usuario;
+
+        // Actualizar la contra
+        // tratar de hashear con bcrypt
+        await pool.request()
+            .input('id_usuario', sql.Int, idUsuario)
+            .input('nueva_password', sql.NVarChar, nuevaPassword)
+            .query('UPDATE Usuarios SET contrasena = @nueva_password WHERE id_usuario = @id_usuario');
+
+        // marcar el token como ya usado
+        await pool.request()
+            .input('token', sql.NVarChar, token)
+            .query('UPDATE Tokens_Recuperacion SET usado = 1 WHERE token = @token');
+
+        res.json({ 
+            success: true, 
+            message: 'Contraseña restablecida correctamente' 
+        });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
