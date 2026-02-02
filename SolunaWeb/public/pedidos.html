@@ -2,7 +2,6 @@
 <html lang="es">
 
 <head>
-
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -13,8 +12,7 @@
 
     <!-- Custom fonts for this template -->
     <link href="vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link
-        href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
         rel="stylesheet">
 
     <!-- Custom styles for this template -->
@@ -23,6 +21,19 @@
     <!-- DataTables CSS -->
     <link href="vendor/datatables/dataTables.bootstrap4.min.css" rel="stylesheet">
 
+    <style>
+        .btn-detalle {
+            transition: all 0.3s ease;
+        }
+        .btn-detalle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .badge-estado {
+            padding: 0.5em 0.8em;
+            font-size: 0.85em;
+        }
+    </style>
 </head>
 
 <body id="page-top">
@@ -68,7 +79,7 @@
 
             <!-- Nav Item - Menú -->
             <li class="nav-item">
-                <a class="nav-link" href="menu.html">
+                <a class="nav-link" href="productos.html">
                     <i class="fas fa-fw fa-book-open"></i>
                     <span>Menú</span></a>
             </li>
@@ -124,6 +135,12 @@
                     <span>Usuarios</span></a>
             </li>
 
+            <li class="nav-item">
+                <a class="nav-link" href="productos.html">
+                    <i class="fas fa-fw fa-utensils"></i>
+                    <span>Gestión de Menú</span></a>
+            </li>
+
             <!-- Nav Item - Reportes -->
             <li class="nav-item">
                 <a class="nav-link" href="reportes.html">
@@ -157,11 +174,10 @@
                     </button>
 
                     <!-- Topbar Search -->
-                    <form
-                        class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
+                    <form class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
                         <div class="input-group">
                             <input type="text" class="form-control bg-light border-0 small" placeholder="Buscar pedido..."
-                                aria-label="Search" aria-describedby="basic-addon2" id="buscarPedido">
+                                aria-label="Search" id="buscarPedido">
                             <div class="input-group-append">
                                 <button class="btn btn-primary" type="button">
                                     <i class="fas fa-search fa-sm"></i>
@@ -195,19 +211,14 @@
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small" id="userName">Mesero</span>
-                                <img class="img-profile rounded-circle"
-                                    src="img/undraw_profile.svg">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small" id="userName">Cajero</span>
+                                <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
                             </a>
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                 aria-labelledby="userDropdown">
                                 <a class="dropdown-item" href="#">
                                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Perfil
-                                </a>
-                                <a class="dropdown-item" href="#">
-                                    <i class="fas fa-cogs fa-sm fa-fw mr-2 text-gray-400"></i>
-                                    Configuración
                                 </a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="#" data-toggle="modal" data-target="#logoutModal">
@@ -228,43 +239,127 @@
                     <!-- Page Heading -->
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
                         <h1 class="h3 mb-0 text-gray-800">Gestión de Pedidos</h1>
-                        <button class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm" data-toggle="modal" data-target="#nuevoPedidoModal">
-                            <i class="fas fa-plus fa-sm text-white-50"></i> Nuevo Pedido
+                        <button class="btn btn-primary shadow-sm" id="btnRecargarPedidos">
+                            <i class="fas fa-sync-alt"></i> Recargar
                         </button>
+                    </div>
+
+                    <!-- Tarjetas de Resumen -->
+                    <div class="row mb-4">
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-primary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                Pedidos Hoy</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="pedidosHoy">0</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-success shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                En Cocina</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="enCocina">0</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-fire fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-warning shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                                Pendientes</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="pendientes">0</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-info shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                                Listos</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="listos">0</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Filtros -->
                     <div class="row mb-4">
                         <div class="col-lg-3 col-md-6 mb-2">
+                            <label class="small font-weight-bold text-gray-700">Estado</label>
                             <select class="form-control" id="filtroEstado">
                                 <option value="">Todos los estados</option>
-                                <option value="pendiente">Pendiente</option>
-                                <option value="en_preparacion">En Preparación</option>
-                                <option value="listo">Listo</option>
-                                <option value="entregado">Entregado</option>
+                                <option value="Pendiente">Pendiente</option>
+                                <option value="En Cocina">En Cocina</option>
+                                <option value="Listo">Listo</option>
+                                <option value="Entregado">Entregado</option>
+                                <option value="Pagado">Pagado</option>
                             </select>
                         </div>
                         <div class="col-lg-3 col-md-6 mb-2">
-                            <select class="form-control" id="filtroMesa">
-                                <option value="">Todas las mesas</option>
-                                <!-- Se llenan dinámicamente -->
+                            <label class="small font-weight-bold text-gray-700">Tipo</label>
+                            <select class="form-control" id="filtroTipo">
+                                <option value="">Todos los tipos</option>
+                                <option value="Salon">Salón</option>
+                                <option value="Express/Delivery">Delivery</option>
                             </select>
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-2">
+                            <label class="small font-weight-bold text-gray-700">Fecha</label>
+                            <input type="date" class="form-control" id="filtroFecha" value="">
+                        </div>
+                        <div class="col-lg-3 col-md-6 mb-2 d-flex align-items-end">
+                            <button class="btn btn-secondary w-100" id="btnLimpiarFiltros">
+                                <i class="fas fa-filter"></i> Limpiar Filtros
+                            </button>
                         </div>
                     </div>
 
                     <!-- DataTable de Pedidos -->
                     <div class="card shadow mb-4">
-                        <div class="card-header py-3">
-                            <h6 class="m-0 font-weight-bold text-primary">Lista de Pedidos</h6>
+                        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-primary">Lista de Pedidos Activos</h6>
+                            <span class="badge badge-primary" id="contadorPedidos">Cargando...</span>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
-                                <table class="table table-bordered" id="tablaPedidos" width="100%" cellspacing="0">
-                                    <thead>
+                                <table class="table table-bordered table-hover" id="tablaPedidos" width="100%" cellspacing="0">
+                                    <thead class="thead-light">
                                         <tr>
                                             <th>N° Pedido</th>
-                                            <th>Mesa</th>
-                                            <th>Cliente</th>
+                                            <th>Cliente/Mesa</th>
                                             <th>Productos</th>
                                             <th>Total</th>
                                             <th>Estado</th>
@@ -273,9 +368,10 @@
                                         </tr>
                                     </thead>
                                     <tbody id="cuerpoPedidos">
-                                        <!-- Los datos se cargan dinámicamente -->
                                         <tr>
-                                            <td colspan="8" class="text-center">Cargando pedidos...</td>
+                                            <td colspan="7" class="text-center text-muted">
+                                                <i class="fas fa-spinner fa-spin mr-2"></i>Cargando pedidos...
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -297,7 +393,6 @@
                     </div>
                 </div>
             </footer>
-            <!-- End of Footer -->
 
         </div>
         <!-- End of Content Wrapper -->
@@ -305,23 +400,17 @@
     </div>
     <!-- End of Page Wrapper -->
 
-    <!-- Scroll to Top Button-->
-    <a class="scroll-to-top rounded" href="#page-top">
-        <i class="fas fa-angle-up"></i>
-    </a>
-
-    <!-- Logout Modal-->
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-        aria-hidden="true">
+    <!-- Logout Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">¿Cerrar Sesión?</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                    <h5 class="modal-title">¿Cerrar Sesión?</h5>
+                    <button class="close" type="button" data-dismiss="modal">
                         <span aria-hidden="true">×</span>
                     </button>
                 </div>
-                <div class="modal-body">Selecciona "Cerrar Sesión" si deseas terminar tu sesión actual.</div>
+                <div class="modal-body">Selecciona "Cerrar Sesión" para terminar tu sesión.</div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
                     <a class="btn btn-primary" href="login.html">Cerrar Sesión</a>
@@ -330,65 +419,94 @@
         </div>
     </div>
 
-    <!-- Modal Nuevo Pedido -->
-    <div class="modal fade" id="nuevoPedidoModal" tabindex="-1" role="dialog" aria-labelledby="nuevoPedidoLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
+    <!-- Modal para Detalle del Pedido -->
+    <div class="modal fade" id="modalDetallePedido" tabindex="-1">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="nuevoPedidoLabel">Nuevo Pedido</h5>
-                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
+                    <h5 class="modal-title">Detalle del Pedido - Personalización</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form id="formNuevoPedido">
-                        <!-- Información de Mesa -->
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="selectMesa">Mesa</label>
-                                <select class="form-control" id="selectMesa" required>
-                                    <option value="">Seleccione una mesa</option>
-                                    <!-- Se llena dinámicamente -->
-                                </select>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label for="nombreCliente">Nombre del Cliente (Opcional)</label>
-                                <input type="text" class="form-control" id="nombreCliente" placeholder="Juan Pérez">
-                            </div>
-                        </div>
-
-                        <!-- Productos -->
-                        <div class="form-group">
-                            <label>Productos</label>
-                            <div id="listaProductos">
-                                <!-- Se llena dinámicamente con productos del menú -->
-                            </div>
-                        </div>
-
-                        <!-- Resumen del Pedido -->
-                        <div class="card bg-light">
-                            <div class="card-body">
-                                <h6 class="font-weight-bold">Resumen del Pedido</h6>
-                                <div id="resumenPedido">
-                                    <p class="text-muted">No hay productos agregados</p>
-                                </div>
-                                <hr>
-                                <p class="mb-1">Subtotal: <span id="subtotalPedido">₡0</span></p>
-                                <p class="mb-1">Impuesto (13%): <span id="impuestoPedido">₡0</span></p>
-                                <h5 class="font-weight-bold">Total: <span id="totalPedido">₡0</span></h5>
-                            </div>
-                        </div>
-
-                    </form>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> 
+                        Modifica cantidad, precio o agrega extras según las preferencias del cliente.
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="detallePedido">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Producto</th>
+                                    <th width="15%">Cantidad</th>
+                                    <th width="20%">Precio</th>
+                                    <th>Notas / Personalización</th>
+                                    <th width="15%">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Se llena dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cancelar</button>
-                    <button class="btn btn-primary" type="button" id="btnCrearPedido">Crear Pedido</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal para Agregar el Extra -->
+    <div class="modal fade" id="modalExtra" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar Extra al Producto</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="descripcionExtra">Descripción del Extra</label>
+                        <input type="text" class="form-control" id="descripcionExtra" 
+                               placeholder="Ej: Extra queso, sin cebolla, salsa adicional..." 
+                               required>
+                        <small class="form-text text-muted">Describe el extra que solicita el cliente.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="costoExtra">Costo Adicional</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">₡</span>
+                            </div>
+                            <input type="number" class="form-control" id="costoExtra" 
+                                   min="0" step="100" value="500" required>
+                            <div class="input-group-append">
+                                <span class="input-group-text">.00</span>
+                            </div>
+                        </div>
+                        <small class="form-text text-muted">Incremento en el precio del producto.</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btnGuardarExtra">
+                        <i class="fas fa-plus-circle"></i> Agregar Extra
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scroll to Top Button-->
+    <a class="scroll-to-top rounded" href="#page-top">
+        <i class="fas fa-angle-up"></i>
+    </a>
 
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>
@@ -400,13 +518,16 @@
     <!-- Custom scripts for all pages-->
     <script src="js/sb-admin-2.min.js"></script>
 
-    <!-- Page level plugins -->
+    <!-- DataTables -->
     <script src="vendor/datatables/jquery.dataTables.min.js"></script>
     <script src="vendor/datatables/dataTables.bootstrap4.min.js"></script>
 
     <!-- Script personalizado para pedidos -->
     <script src="js/pedidos.js"></script>
 
-</body>
+    
+    
+    
 
+</body>
 </html>

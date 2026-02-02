@@ -124,15 +124,6 @@ app.delete('/api/usuarios/:id', async (req, res) => {
     }
 });
 
-// Start server and connect to DB
-app.listen(PORT, async () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-    try {
-        await getConnection();
-    } catch (err) {
-        console.error('Failed to connect to DB on startup:', err.message);
-    }
-});
 
 const crypto = require('crypto');
 const { enviarEmailRecuperacion } = require('./emailService');
@@ -275,7 +266,393 @@ app.post('/api/restablecer-password', async (req, res) => {
     }
 });
 
+
+// recibir todos los productos
+app.get('/api/productos', async (req, res) => {
+    try {
+        const pool = await getConnection();
+        const result = await pool.request().query(`
+            SELECT p.*, c.nombre AS categoria
+            FROM Productos p
+            LEFT JOIN Categorias c ON p.id_categoria = c.id_categoria
+            ORDER BY p.nombre_producto
+        `);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// conseguir solo productos DISPONIBLES para los pedidos
+app.get('/api/productos/disponibles', async (req, res) => {
+    try {
+        const pool = await getConnection();
+        const result = await pool.request().query(`
+            SELECT p.*, c.nombre AS categoria
+            FROM Productos p
+            LEFT JOIN Categorias c ON p.id_categoria = c.id_categoria
+            WHERE p.es_disponible = 1
+            ORDER BY p.nombre_producto
+        `);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// TOGGLE DISPONIBILIDAD DE PRODUCTO 
+app.post('/api/productos/:id/toggle-disponibilidad', async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        const pool = await getConnection();
+
+        // Obtener estado actual
+        const result = await pool.request()
+            .input('id', sql.Int, id)
+            .query(`
+                SELECT es_disponible 
+                FROM Productos 
+                WHERE id_producto = @id
+            `);
+
+        if (result.recordset.length === 0) {
+            return res.json({ success: false, error: 'Producto no existe' });
+        }
+
+        const estadoActual = result.recordset[0].es_disponible;
+        const nuevoEstado = estadoActual ? 0 : 1;
+
+        // Actualizar
+        await pool.request()
+            .input('id', sql.Int, id)
+            .input('estado', sql.Bit, nuevoEstado)
+            .query(`
+                UPDATE Productos 
+                SET es_disponible = @estado 
+                WHERE id_producto = @id
+            `);
+
+        res.json({
+            success: true,
+            nuevoEstado: nuevoEstado
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+
+// obtener el detalle de un pedido específico
+app.get('/api/pedidos/:id/detalle', async (req, res) => {
+    try {
+        const pool = await getConnection();
+        const result = await pool.request()
+            .input('id', sql.Int, req.params.id)
+            .query(`
+                SELECT d.*, p.nombre_producto
+                FROM Detalle_Pedidos d
+                INNER JOIN Productos p ON d.id_producto = p.id_producto
+                WHERE d.id_pedido = @id
+                ORDER BY d.id_detalle
+            `);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Actualizar las notas de un producto en el pedido 
+app.put('/api/detalle-pedido/:id/notas', async (req, res) => {
+    const { notas } = req.body;
+
+    try {
+        const pool = await getConnection();
+        await pool.request()
+            .input('id', sql.Int, req.params.id)
+            .input('notas', sql.NVarChar, notas)
+            .query(`
+                UPDATE Detalle_Pedidos
+                SET notas = @notas
+                WHERE id_detalle = @id
+            `);
+
+        res.json({ message: 'Notas actualizadas correctamente' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// modificacion total de producto en pedido 
+app.put('/api/detalle-pedido/:id', async (req, res) => {
+    const { id } = req.params;
+    const { cantidad, notas, precio_unitario } = req.body;
+
+    try {
+        const pool = await getConnection();
+        
+        // primero conseguimos el detalle actual
+        const detalleActual = await pool.request()
+            .input('id', sql.Int, id)
+            .query('SELECT * FROM Detalle_Pedidos WHERE id_detalle = @id');
+        
+        if (detalleActual.recordset.length === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado en el pedido' });
+        }
+        
+        // actualizamos el producto
+        await pool.request()
+            .input('id', sql.Int, id)
+            .input('cantidad', sql.Int, cantidad || detalleActual.recordset[0].cantidad)
+            .input('notas', sql.NVarChar, notas || detalleActual.recordset[0].notas)
+            .input('precio_unitario', sql.Decimal(10, 2), 
+                   precio_unitario || detalleActual.recordset[0].precio_unitario)
+            .query(`
+                UPDATE Detalle_Pedidos
+                SET cantidad = @cantidad,
+                    notas = @notas,
+                    precio_unitario = @precio_unitario
+                WHERE id_detalle = @id
+            `);
+        
+        // actualizamos el total del pedido
+        const idPedido = detalleActual.recordset[0].id_pedido;
+        await pool.request()
+            .input('id_pedido', sql.Int, idPedido)
+            .query(`
+                UPDATE Pedidos
+                SET total = (
+                    SELECT SUM(cantidad * precio_unitario)
+                    FROM Detalle_Pedidos
+                    WHERE id_pedido = @id_pedido
+                )
+                WHERE id_pedido = @id_pedido
+            `);
+
+        res.json({ 
+            message: 'Producto modificado correctamente',
+            success: true 
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// agregar extra a un producto del pedido
+app.post('/api/detalle-pedido/:id/extra', async (req, res) => {
+    const { id } = req.params;
+    const { descripcion_extra, costo_extra } = req.body;
+
+    try {
+        const pool = await getConnection();
+        
+        // obtenemos el detalle actual
+        const detalleResult = await pool.request()
+            .input('id', sql.Int, id)
+            .query('SELECT * FROM Detalle_Pedidos WHERE id_detalle = @id');
+        
+        if (detalleResult.recordset.length === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado en el pedido' });
+        }
+        
+        const detalle = detalleResult.recordset[0];
+        
+        // formateamos las nuevas notas
+        const nuevasNotas = detalle.notas 
+            ? `${detalle.notas} | Extra: ${descripcion_extra} (+₡${costo_extra})`
+            : `Extra: ${descripcion_extra} (+₡${costo_extra})`;
+        
+        // calculamos nuevo precio
+        const nuevoPrecio = parseFloat(detalle.precio_unitario) + parseFloat(costo_extra);
+        
+        await pool.request()
+            .input('id', sql.Int, id)
+            .input('notas', sql.NVarChar, nuevasNotas)
+            .input('precio_unitario', sql.Decimal(10, 2), nuevoPrecio)
+            .query(`
+                UPDATE Detalle_Pedidos
+                SET notas = @notas,
+                    precio_unitario = @precio_unitario
+                WHERE id_detalle = @id
+            `);
+        
+        // actualizar total del pedido
+        await pool.request()
+            .input('id_pedido', sql.Int, detalle.id_pedido)
+            .query(`
+                UPDATE Pedidos
+                SET total = (
+                    SELECT SUM(cantidad * precio_unitario)
+                    FROM Detalle_Pedidos
+                    WHERE id_pedido = @id_pedido
+                )
+                WHERE id_pedido = @id_pedido
+            `);
+
+        res.json({ 
+            message: 'Extra agregado correctamente',
+            success: true 
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// eliminar producto del pedido
+app.delete('/api/detalle-pedido/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await getConnection();
+        
+        // primero obtenemos el id_pedido para luego actualizar el total 
+        const detalleResult = await pool.request()
+            .input('id', sql.Int, id)
+            .query('SELECT id_pedido FROM Detalle_Pedidos WHERE id_detalle = @id');
+        
+        if (detalleResult.recordset.length === 0) {
+            return res.status(404).json({ error: 'Producto no encontrado' });
+        }
+        
+        const idPedido = detalleResult.recordset[0].id_pedido;
+        
+        // eliminamos el producto
+        await pool.request()
+            .input('id', sql.Int, id)
+            .query('DELETE FROM Detalle_Pedidos WHERE id_detalle = @id');
+        
+        // actualizamos el total del pedido
+        await pool.request()
+            .input('id_pedido', sql.Int, idPedido)
+            .query(`
+                UPDATE Pedidos
+                SET total = ISNULL((
+                    SELECT SUM(cantidad * precio_unitario)
+                    FROM Detalle_Pedidos
+                    WHERE id_pedido = @id_pedido
+                ), 0)
+                WHERE id_pedido = @id_pedido
+            `);
+
+        res.json({ 
+            message: 'Producto eliminado del pedido',
+            success: true 
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Obtener todos los pedidos
+app.get('/api/pedidos', async (req, res) => {
+    try {
+        const pool = await getConnection();
+        const result = await pool.request().query(`
+            SELECT 
+                p.*,
+                m.numero_mesa,
+                c.nombre_completo as nombre_cliente,
+                u.nombre_completo as nombre_mesero,
+                (SELECT COUNT(*) FROM Detalle_Pedidos dp WHERE dp.id_pedido = p.id_pedido) as cantidad_productos
+            FROM Pedidos p
+            LEFT JOIN Mesas m ON p.id_mesa = m.id_mesa
+            LEFT JOIN Clientes c ON p.id_cliente = c.id_cliente
+            LEFT JOIN Usuarios u ON p.id_usuario = u.id_usuario
+            WHERE p.estado NOT IN ('Pagado', 'Cancelado')
+            ORDER BY p.fecha_pedido DESC
+        `);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Obtener pedidos por estado
+app.get('/api/pedidos/estado/:estado', async (req, res) => {
+    try {
+        const { estado } = req.params;
+        const pool = await getConnection();
+        const result = await pool.request()
+            .input('estado', sql.NVarChar, estado)
+            .query(`
+                SELECT p.*, m.numero_mesa, c.nombre_completo
+                FROM Pedidos p
+                LEFT JOIN Mesas m ON p.id_mesa = m.id_mesa
+                LEFT JOIN Clientes c ON p.id_cliente = c.id_cliente
+                WHERE p.estado = @estado
+                ORDER BY p.fecha_pedido
+            `);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/pedidos/:id/estado', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { estado } = req.body;
+        const pool = await getConnection();
+        
+        await pool.request()
+            .input('id', sql.Int, id)
+            .input('estado', sql.NVarChar, estado)
+            .query('UPDATE Pedidos SET estado = @estado WHERE id_pedido = @id');
+            
+        res.json({ success: true, message: 'Estado actualizado' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Estadísticas de pedidos
+app.get('/api/pedidos/estadisticas/hoy', async (req, res) => {
+    try {
+        const pool = await getConnection();
+        const result = await pool.request().query(`
+            SELECT 
+                COUNT(*) as total_hoy,
+                SUM(CASE WHEN estado = 'Pendiente' THEN 1 ELSE 0 END) as pendientes,
+                SUM(CASE WHEN estado = 'En Cocina' THEN 1 ELSE 0 END) as en_cocina,
+                SUM(CASE WHEN estado = 'Listo' THEN 1 ELSE 0 END) as listos,
+                SUM(CASE WHEN estado = 'Entregado' THEN 1 ELSE 0 END) as entregados,
+                SUM(total) as ventas_hoy
+            FROM Pedidos 
+            WHERE CAST(fecha_pedido AS DATE) = CAST(GETDATE() AS DATE)
+        `);
+        res.json(result.recordset[0] || {});
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+app.get('/productos', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/productos.html'));
+});
+
+app.get('/pedidos', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/pedidos.html'));
+});
+
+// Ruta para el dashboard
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'views/index.html'));
+});
+
 // Fallback to index.html for any other requests (SPA behavior if needed, or just 404)
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+app.listen(PORT, async () => {
+    console.log(`✅ Servidor ejecutándose en http://localhost:${PORT}`);
+    
+    try {
+        await getConnection();
+        console.log(' Conexión a la base de datos establecida');
+    } catch (err) {
+        console.error(' Error al conectar con la base de datos:', err.message);
+    }
 });
