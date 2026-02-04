@@ -34,53 +34,53 @@
             flex-direction: column;
             justify-content: center;
         }
-        
+
         .mesa-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
         }
-        
+
         .mesa-card.libre {
             background: #d1f2eb;
             border-color: #1cc88a;
         }
-        
+
         .mesa-card.ocupada {
             background: #fff3cd;
             border-color: #f6c23e;
         }
-        
+
         .mesa-card.reservada {
             background: #cfe2ff;
             border-color: #4e73df;
         }
-        
+
         .mesa-card.mantenimiento {
             background: #f8d7da;
             border-color: #e74a3b;
         }
-        
+
         .mesa-numero {
             font-size: 3rem;
             font-weight: bold;
             margin-bottom: 10px;
         }
-        
+
         .mesa-capacidad {
             font-size: 0.9rem;
             color: #858796;
         }
-        
+
         .mesa-tiempo {
             font-size: 0.85rem;
             margin-top: 10px;
         }
-        
+
         .leyenda-item {
             display: inline-block;
             margin: 5px 15px;
         }
-        
+
         .leyenda-color {
             display: inline-block;
             width: 20px;
@@ -112,11 +112,12 @@
             <!-- Divider -->
             <hr class="sidebar-divider my-0">
 
-            <!-- Nav Item - Dashboard -->
-            <li class="nav-item">
+            <!-- Nav Item - Dashboard (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="index.html">
                     <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Dashboard</span></a>
+                    <span>Dashboard</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -127,25 +128,28 @@
                 Gestión de Pedidos
             </div>
 
-            <!-- Nav Item - Pedidos -->
-            <li class="nav-item">
+            <!-- Nav Item - Pedidos (Cajero) -->
+            <li class="nav-item" data-roles="Cajero">
                 <a class="nav-link" href="pedidos.html">
                     <i class="fas fa-fw fa-clipboard-list"></i>
-                    <span>Pedidos</span></a>
+                    <span>Pedidos</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Menú -->
-            <li class="nav-item">
+            <!-- Nav Item - Menú (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="menu.html">
                     <i class="fas fa-fw fa-book-open"></i>
-                    <span>Menú</span></a>
+                    <span>Menú</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Mesas (ACTIVO) -->
-            <li class="nav-item active">
+            <!-- Nav Item - Control de Salón (Mesero) -->
+            <li class="nav-item active" data-roles="Mesero">
                 <a class="nav-link" href="mesas.html">
                     <i class="fas fa-fw fa-chair"></i>
-                    <span>Control de Salón</span></a>
+                    <span>Control de Salón</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -156,25 +160,28 @@
                 Operaciones
             </div>
 
-            <!-- Nav Item - Caja -->
-            <li class="nav-item">
+            <!-- Nav Item - Caja (Cajero) -->
+            <li class="nav-item" data-roles="Cajero">
                 <a class="nav-link" href="caja.html">
                     <i class="fas fa-fw fa-cash-register"></i>
-                    <span>Caja</span></a>
+                    <span>Caja</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Cocina -->
-            <li class="nav-item">
+            <!-- Nav Item - Cocina (Cocinero) -->
+            <li class="nav-item" data-roles="Cocinero">
                 <a class="nav-link" href="cocina.html">
                     <i class="fas fa-fw fa-fire"></i>
-                    <span>Cocina</span></a>
+                    <span>Cocina</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Inventario -->
-            <li class="nav-item">
+            <!-- Nav Item - Inventario (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="inventario.html">
                     <i class="fas fa-fw fa-boxes"></i>
-                    <span>Inventario</span></a>
+                    <span>Inventario</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -185,23 +192,28 @@
                 Administración
             </div>
 
-            <!-- Nav Item - Usuarios -->
-            <li class="nav-item">
+            <!-- Nav Item - Usuarios (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="usuarios.html">
                     <i class="fas fa-fw fa-users"></i>
-                    <span>Usuarios</span></a>
+                    <span>Usuarios</span>
+                </a>
             </li>
 
-            <li class="nav-item">
+            <!-- Nav Item - Gestión de Menú (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="productos.html">
                     <i class="fas fa-fw fa-utensils"></i>
-                    <span>Gestión de Menú</span></a>
+                    <span>Gestión de Menú</span>
+                </a>
             </li>
-            <!-- Nav Item - Reportes -->
-            <li class="nav-item">
+
+            <!-- Nav Item - Reportes (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="reportes.html">
                     <i class="fas fa-fw fa-chart-bar"></i>
-                    <span>Reportes</span></a>
+                    <span>Reportes</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -261,8 +273,7 @@
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="mr-2 d-none d-lg-inline text-gray-600 small" id="userName">Mesero</span>
-                                <img class="img-profile rounded-circle"
-                                    src="img/undraw_profile.svg">
+                                <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
                             </a>
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                 aria-labelledby="userDropdown">
@@ -294,19 +305,23 @@
                     <div class="card shadow mb-4">
                         <div class="card-body text-center">
                             <div class="leyenda-item">
-                                <span class="leyenda-color" style="background: #d1f2eb; border: 2px solid #1cc88a;"></span>
+                                <span class="leyenda-color"
+                                    style="background: #d1f2eb; border: 2px solid #1cc88a;"></span>
                                 <strong>Libre</strong>
                             </div>
                             <div class="leyenda-item">
-                                <span class="leyenda-color" style="background: #fff3cd; border: 2px solid #f6c23e;"></span>
+                                <span class="leyenda-color"
+                                    style="background: #fff3cd; border: 2px solid #f6c23e;"></span>
                                 <strong>Ocupada</strong>
                             </div>
                             <div class="leyenda-item">
-                                <span class="leyenda-color" style="background: #cfe2ff; border: 2px solid #4e73df;"></span>
+                                <span class="leyenda-color"
+                                    style="background: #cfe2ff; border: 2px solid #4e73df;"></span>
                                 <strong>Reservada</strong>
                             </div>
                             <div class="leyenda-item">
-                                <span class="leyenda-color" style="background: #f8d7da; border: 2px solid #e74a3b;"></span>
+                                <span class="leyenda-color"
+                                    style="background: #f8d7da; border: 2px solid #e74a3b;"></span>
                                 <strong>Mantenimiento</strong>
                             </div>
                         </div>
@@ -433,23 +448,22 @@
                 <div class="modal-body">
                     <form id="formOcuparMesa">
                         <input type="hidden" id="mesaIdOcupar">
-                        
+
                         <div class="form-group">
                             <label for="nombreCliente">Nombre del Cliente</label>
-                            <input type="text" class="form-control" id="nombreClienteOcupar" 
-                                   placeholder="Ej: Juan Pérez" required>
+                            <input type="text" class="form-control" id="nombreClienteOcupar"
+                                placeholder="Ej: Juan Pérez" required>
                         </div>
 
                         <div class="form-group">
                             <label for="numeroPersonas">Número de Personas</label>
-                            <input type="number" class="form-control" id="numeroPersonas" 
-                                   min="1" max="12" placeholder="4" required>
+                            <input type="number" class="form-control" id="numeroPersonas" min="1" max="12"
+                                placeholder="4" required>
                         </div>
 
                         <div class="form-group">
                             <label for="telefonoCliente">Teléfono (Opcional)</label>
-                            <input type="tel" class="form-control" id="telefonoCliente" 
-                                   placeholder="8888-8888">
+                            <input type="tel" class="form-control" id="telefonoCliente" placeholder="8888-8888">
                         </div>
 
                     </form>
@@ -476,6 +490,7 @@
 
     <!-- Script personalizado para mesas -->
     <script src="js/mesas.js"></script>
+    <script src="js/auth-guard.js"></script>
 
 </body>
 

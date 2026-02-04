@@ -40,15 +40,15 @@
                 </div>
                 <div class="sidebar-brand-text mx-3">SOLUNA</div>
             </a>
-
             <!-- Divider -->
             <hr class="sidebar-divider my-0">
 
-            <!-- Nav Item - Dashboard -->
-            <li class="nav-item">
+            <!-- Nav Item - Dashboard (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="index.html">
                     <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Dashboard</span></a>
+                    <span>Dashboard</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -59,25 +59,28 @@
                 Gestión de Pedidos
             </div>
 
-            <!-- Nav Item - Pedidos -->
-            <li class="nav-item">
+            <!-- Nav Item - Pedidos (Cajero) -->
+            <li class="nav-item" data-roles="Cajero">
                 <a class="nav-link" href="pedidos.html">
                     <i class="fas fa-fw fa-clipboard-list"></i>
-                    <span>Pedidos</span></a>
+                    <span>Pedidos</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Menú -->
-            <li class="nav-item">
+            <!-- Nav Item - Menú (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="menu.html">
                     <i class="fas fa-fw fa-book-open"></i>
-                    <span>Menú</span></a>
+                    <span>Menú</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Mesas -->
-            <li class="nav-item">
+            <!-- Nav Item - Control de Salón (Mesero) -->
+            <li class="nav-item" data-roles="Mesero">
                 <a class="nav-link" href="mesas.html">
                     <i class="fas fa-fw fa-chair"></i>
-                    <span>Control de Salón</span></a>
+                    <span>Control de Salón</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -88,25 +91,28 @@
                 Operaciones
             </div>
 
-            <!-- Nav Item - Caja -->
-            <li class="nav-item">
+            <!-- Nav Item - Caja (Cajero) -->
+            <li class="nav-item" data-roles="Cajero">
                 <a class="nav-link" href="caja.html">
                     <i class="fas fa-fw fa-cash-register"></i>
-                    <span>Caja</span></a>
+                    <span>Caja</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Cocina -->
-            <li class="nav-item">
+            <!-- Nav Item - Cocina (Cocinero) -->
+            <li class="nav-item" data-roles="Cocinero">
                 <a class="nav-link" href="cocina.html">
                     <i class="fas fa-fw fa-fire"></i>
-                    <span>Cocina</span></a>
+                    <span>Cocina</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Inventario -->
-            <li class="nav-item">
+            <!-- Nav Item - Inventario (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="inventario.html">
                     <i class="fas fa-fw fa-boxes"></i>
-                    <span>Inventario</span></a>
+                    <span>Inventario</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -117,22 +123,28 @@
                 Administración
             </div>
 
-            <!-- Nav Item - Usuarios (ACTIVO) -->
-            <li class="nav-item active">
+            <!-- Nav Item - Usuarios (Administrador) -->
+            <li class="nav-item active" data-roles="Administrador">
                 <a class="nav-link" href="usuarios.html">
                     <i class="fas fa-fw fa-users"></i>
-                    <span>Usuarios</span></a>
+                    <span>Usuarios</span>
+                </a>
             </li>
-            <li class="nav-item">
+
+            <!-- Nav Item - Gestión de Menú (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="productos.html">
                     <i class="fas fa-fw fa-utensils"></i>
-                    <span>Gestión de Menú</span></a>
+                    <span>Gestión de Menú</span>
+                </a>
             </li>
-            <!-- Nav Item - Reportes -->
-            <li class="nav-item">
+
+            <!-- Nav Item - Reportes (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="reportes.html">
                     <i class="fas fa-fw fa-chart-bar"></i>
-                    <span>Reportes</span></a>
+                    <span>Reportes</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -497,6 +509,7 @@
 
     <!-- Script personalizado para usuarios -->
     <script src="js/usuarios.js"></script>
+    <script src="js/auth-guard.js"></script>
 
 </body>
 

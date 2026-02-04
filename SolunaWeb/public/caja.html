@@ -41,11 +41,12 @@
             <!-- Divider -->
             <hr class="sidebar-divider my-0">
 
-            <!-- Nav Item - Dashboard -->
-            <li class="nav-item">
+            <!-- Nav Item - Dashboard (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="index.html">
                     <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Dashboard</span></a>
+                    <span>Dashboard</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -56,25 +57,28 @@
                 Gestión de Pedidos
             </div>
 
-            <!-- Nav Item - Pedidos -->
-            <li class="nav-item">
+            <!-- Nav Item - Pedidos (Cajero) -->
+            <li class="nav-item" data-roles="Cajero">
                 <a class="nav-link" href="pedidos.html">
                     <i class="fas fa-fw fa-clipboard-list"></i>
-                    <span>Pedidos</span></a>
+                    <span>Pedidos</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Menú -->
-            <li class="nav-item">
+            <!-- Nav Item - Menú (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="menu.html">
                     <i class="fas fa-fw fa-book-open"></i>
-                    <span>Menú</span></a>
+                    <span>Menú</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Mesas -->
-            <li class="nav-item">
+            <!-- Nav Item - Control de Salón (Mesero) -->
+            <li class="nav-item" data-roles="Mesero">
                 <a class="nav-link" href="mesas.html">
                     <i class="fas fa-fw fa-chair"></i>
-                    <span>Control de Salón</span></a>
+                    <span>Control de Salón</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -85,25 +89,28 @@
                 Operaciones
             </div>
 
-            <!-- Nav Item - Caja (ACTIVO) -->
-            <li class="nav-item active">
+            <!-- Nav Item - Caja (Cajero) -->
+            <li class="nav-item active" data-roles="Cajero">
                 <a class="nav-link" href="caja.html">
                     <i class="fas fa-fw fa-cash-register"></i>
-                    <span>Caja</span></a>
+                    <span>Caja</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Cocina -->
-            <li class="nav-item">
+            <!-- Nav Item - Cocina (Cocinero) -->
+            <li class="nav-item" data-roles="Cocinero">
                 <a class="nav-link" href="cocina.html">
                     <i class="fas fa-fw fa-fire"></i>
-                    <span>Cocina</span></a>
+                    <span>Cocina</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Inventario -->
-            <li class="nav-item">
+            <!-- Nav Item - Inventario (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="inventario.html">
                     <i class="fas fa-fw fa-boxes"></i>
-                    <span>Inventario</span></a>
+                    <span>Inventario</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -114,23 +121,28 @@
                 Administración
             </div>
 
-            <!-- Nav Item - Usuarios -->
-            <li class="nav-item">
+            <!-- Nav Item - Usuarios (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="usuarios.html">
                     <i class="fas fa-fw fa-users"></i>
-                    <span>Usuarios</span></a>
+                    <span>Usuarios</span>
+                </a>
             </li>
-             
-            <li class="nav-item">
+
+            <!-- Nav Item - Gestión de Menú (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="productos.html">
                     <i class="fas fa-fw fa-utensils"></i>
-                    <span>Gestión de Menú</span></a>
+                    <span>Gestión de Menú</span>
+                </a>
             </li>
-            <!-- Nav Item - Reportes -->
-            <li class="nav-item">
+
+            <!-- Nav Item - Reportes (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="reportes.html">
                     <i class="fas fa-fw fa-chart-bar"></i>
-                    <span>Reportes</span></a>
+                    <span>Reportes</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -162,8 +174,9 @@
                     <form
                         class="d-none d-sm-inline-block form-inline mr-auto ml-md-3 my-2 my-md-0 mw-100 navbar-search">
                         <div class="input-group">
-                            <input type="text" class="form-control bg-light border-0 small" placeholder="Buscar pedido o mesa..."
-                                aria-label="Search" aria-describedby="basic-addon2" id="buscarPedido">
+                            <input type="text" class="form-control bg-light border-0 small"
+                                placeholder="Buscar pedido o mesa..." aria-label="Search"
+                                aria-describedby="basic-addon2" id="buscarPedido">
                             <div class="input-group-append">
                                 <button class="btn btn-primary" type="button">
                                     <i class="fas fa-search fa-sm"></i>
@@ -190,8 +203,7 @@
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="mr-2 d-none d-lg-inline text-gray-600 small" id="userName">Cajero</span>
-                                <img class="img-profile rounded-circle"
-                                    src="img/undraw_profile.svg">
+                                <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
                             </a>
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                 aria-labelledby="userDropdown">
@@ -222,8 +234,8 @@
                     <!-- Page Heading -->
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
                         <h1 class="h3 mb-0 text-gray-800">Caja y Facturación</h1>
-                        <button class="d-none d-sm-inline-block btn btn-sm btn-danger shadow-sm" 
-                                data-toggle="modal" data-target="#cerrarCajaModal">
+                        <button class="d-none d-sm-inline-block btn btn-sm btn-danger shadow-sm" data-toggle="modal"
+                            data-target="#cerrarCajaModal">
                             <i class="fas fa-lock fa-sm text-white-50"></i> Cerrar Caja
                         </button>
                     </div>
@@ -239,7 +251,8 @@
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                                 Monto Inicial</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="montoInicial">₡50,000</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="montoInicial">
+                                                ₡50,000</div>
                                         </div>
                                         <div class="col-auto">
                                             <i class="fas fa-coins fa-2x text-gray-300"></i>
@@ -293,7 +306,8 @@
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                                 Total en Caja</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalCaja">₡50,000</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalCaja">₡50,000
+                                            </div>
                                         </div>
                                         <div class="col-auto">
                                             <i class="fas fa-cash-register fa-2x text-gray-300"></i>
@@ -429,19 +443,18 @@
                 </div>
                 <div class="modal-body">
                     <form id="formFactura">
-                        
+
                         <!-- Información del Cliente -->
                         <h6 class="font-weight-bold mb-3">Información del Cliente</h6>
                         <div class="form-row">
                             <div class="form-group col-md-6">
                                 <label for="nombreCliente">Nombre</label>
-                                <input type="text" class="form-control" id="nombreClienteFactura" 
-                                       placeholder="Cliente">
+                                <input type="text" class="form-control" id="nombreClienteFactura" placeholder="Cliente">
                             </div>
                             <div class="form-group col-md-6">
                                 <label for="identificacionCliente">Identificación</label>
-                                <input type="text" class="form-control" id="identificacionCliente" 
-                                       placeholder="1-1234-5678">
+                                <input type="text" class="form-control" id="identificacionCliente"
+                                    placeholder="1-1234-5678">
                             </div>
                         </div>
 
@@ -464,8 +477,7 @@
                             </div>
                             <div class="form-group col-md-6" id="pagoConContainer" style="display: none;">
                                 <label for="pagoCon">Paga con</label>
-                                <input type="number" class="form-control" id="pagoCon" 
-                                       placeholder="₡20,000">
+                                <input type="number" class="form-control" id="pagoCon" placeholder="₡20,000">
                             </div>
                         </div>
 
@@ -534,9 +546,9 @@
                             <td class="text-right font-weight-bold text-success" id="cierreMontoFinal">₡50,000</td>
                         </tr>
                     </table>
-                    
+
                     <div class="alert alert-warning mt-3">
-                        <i class="fas fa-exclamation-triangle"></i> 
+                        <i class="fas fa-exclamation-triangle"></i>
                         ¿Está seguro de cerrar la caja? Esta acción generará un reporte final.
                     </div>
                 </div>
@@ -562,6 +574,7 @@
 
     <!-- Script personalizado para caja -->
     <script src="js/caja.js"></script>
+    <script src="js/auth-guard.js"></script>
 
 </body>
 

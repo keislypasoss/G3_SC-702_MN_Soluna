@@ -41,11 +41,12 @@
             <!-- Divider -->
             <hr class="sidebar-divider my-0">
 
-            <!-- Nav Item - Dashboard -->
-            <li class="nav-item">
+            <!-- Nav Item - Dashboard (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="index.html">
                     <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Dashboard</span></a>
+                    <span>Dashboard</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -56,25 +57,28 @@
                 Gestión de Pedidos
             </div>
 
-            <!-- Nav Item - Pedidos -->
-            <li class="nav-item">
+            <!-- Nav Item - Pedidos (Cajero) -->
+            <li class="nav-item" data-roles="Cajero">
                 <a class="nav-link" href="pedidos.html">
                     <i class="fas fa-fw fa-clipboard-list"></i>
-                    <span>Pedidos</span></a>
+                    <span>Pedidos</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Menú -->
-            <li class="nav-item">
+            <!-- Nav Item - Menú (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="menu.html">
                     <i class="fas fa-fw fa-book-open"></i>
-                    <span>Menú</span></a>
+                    <span>Menú</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Mesas -->
-            <li class="nav-item">
+            <!-- Nav Item - Control de Salón (Mesero) -->
+            <li class="nav-item" data-roles="Mesero">
                 <a class="nav-link" href="mesas.html">
                     <i class="fas fa-fw fa-chair"></i>
-                    <span>Control de Salón</span></a>
+                    <span>Control de Salón</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -85,25 +89,28 @@
                 Operaciones
             </div>
 
-            <!-- Nav Item - Caja -->
-            <li class="nav-item">
+            <!-- Nav Item - Caja (Cajero) -->
+            <li class="nav-item" data-roles="Cajero">
                 <a class="nav-link" href="caja.html">
                     <i class="fas fa-fw fa-cash-register"></i>
-                    <span>Caja</span></a>
+                    <span>Caja</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Cocina -->
-            <li class="nav-item">
+            <!-- Nav Item - Cocina (Cocinero) -->
+            <li class="nav-item" data-roles="Cocinero">
                 <a class="nav-link" href="cocina.html">
                     <i class="fas fa-fw fa-fire"></i>
-                    <span>Cocina</span></a>
+                    <span>Cocina</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Inventario -->
-            <li class="nav-item">
+            <!-- Nav Item - Inventario (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="inventario.html">
                     <i class="fas fa-fw fa-boxes"></i>
-                    <span>Inventario</span></a>
+                    <span>Inventario</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -114,22 +121,28 @@
                 Administración
             </div>
 
-            <!-- Nav Item - Usuarios -->
-            <li class="nav-item">
+            <!-- Nav Item - Usuarios (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="usuarios.html">
                     <i class="fas fa-fw fa-users"></i>
-                    <span>Usuarios</span></a>
+                    <span>Usuarios</span>
+                </a>
             </li>
-            <li class="nav-item">
+
+            <!-- Nav Item - Gestión de Menú (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="productos.html">
                     <i class="fas fa-fw fa-utensils"></i>
-                    <span>Gestión de Menú</span></a>
+                    <span>Gestión de Menú</span>
+                </a>
             </li>
-            <!-- Nav Item - Reportes (ACTIVO) -->
-            <li class="nav-item active">
+
+            <!-- Nav Item - Reportes (Administrador) -->
+            <li class="nav-item active" data-roles="Administrador">
                 <a class="nav-link" href="reportes.html">
                     <i class="fas fa-fw fa-chart-bar"></i>
-                    <span>Reportes</span></a>
+                    <span>Reportes</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -191,9 +204,9 @@
                         <li class="nav-item dropdown no-arrow">
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small" id="userName">Administrador</span>
-                                <img class="img-profile rounded-circle"
-                                    src="img/undraw_profile.svg">
+                                <span class="mr-2 d-none d-lg-inline text-gray-600 small"
+                                    id="userName">Administrador</span>
+                                <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
                             </a>
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                 aria-labelledby="userDropdown">
@@ -259,7 +272,8 @@
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
                                                 Ventas Totales (Mes)</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="ventasTotales">₡0</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="ventasTotales">₡0
+                                            </div>
                                         </div>
                                         <div class="col-auto">
                                             <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
@@ -277,7 +291,8 @@
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                                 Pedidos (Mes)</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalPedidos">0</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalPedidos">0
+                                            </div>
                                         </div>
                                         <div class="col-auto">
                                             <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
@@ -295,7 +310,8 @@
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                                 Ticket Promedio</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="ticketPromedio">₡0</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="ticketPromedio">₡0
+                                            </div>
                                         </div>
                                         <div class="col-auto">
                                             <i class="fas fa-receipt fa-2x text-gray-300"></i>
@@ -313,7 +329,8 @@
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                                 Clientes Atendidos</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="clientesAtendidos">0</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="clientesAtendidos">0
+                                            </div>
                                         </div>
                                         <div class="col-auto">
                                             <i class="fas fa-users fa-2x text-gray-300"></i>
@@ -330,7 +347,8 @@
                         <!-- Gráfico de Ventas por Día -->
                         <div class="col-xl-8 col-lg-7">
                             <div class="card shadow mb-4">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <div
+                                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                                     <h6 class="m-0 font-weight-bold text-primary">Ventas por Día</h6>
                                 </div>
                                 <div class="card-body">
@@ -344,7 +362,8 @@
                         <!-- Gráfico de Top Productos -->
                         <div class="col-xl-4 col-lg-5">
                             <div class="card shadow mb-4">
-                                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                                <div
+                                    class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
                                     <h6 class="m-0 font-weight-bold text-primary">Top 5 Productos</h6>
                                 </div>
                                 <div class="card-body">
@@ -493,6 +512,7 @@
 
     <!-- Script personalizado para reportes -->
     <script src="js/reportes.js"></script>
+    <script src="js/auth-guard.js"></script>
 
 </body>
 

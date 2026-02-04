@@ -627,27 +627,139 @@ app.get('/api/pedidos/estadisticas/hoy', async (req, res) => {
     }
 });
 
+const verificarAutenticacion = (req, res, next) => {
+    // En producción se usaria JWT o sesiones
+    // Por ahora es solo un placeholder
+    console.log('Acceso a ruta protegida:', req.path);
+    next();
+};
 
-app.get('/productos', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/productos.html'));
+
+// Login de usuarios
+app.post('/api/login', async (req, res) => {
+    try {
+        const { correo, password } = req.body;
+
+        if (!correo || !password) {
+            return res.status(400).json({ error: 'Correo y contraseña requeridos' });
+        }
+
+        const pool = await getConnection();
+        const result = await pool.request()
+            .input('correo', sql.NVarChar, correo)
+            .input('password', sql.NVarChar, password)
+            .query(`
+                SELECT 
+                    u.id_usuario,
+                    u.nombre_completo,
+                    u.correo,
+                    u.estado,
+                    r.id_rol,
+                    r.nombre_rol
+                FROM Usuarios u
+                INNER JOIN Roles r ON u.id_rol = r.id_rol
+                WHERE u.correo = @correo
+                  AND u.contrasena = @password
+            `);
+
+        if (result.recordset.length === 0) {
+            return res.status(401).json({ error: 'Credenciales incorrectas' });
+        }
+
+        const usuario = result.recordset[0];
+
+        if (!usuario.estado) {
+            return res.status(403).json({ error: 'Usuario desactivado. Contacte al administrador.' });
+        }
+
+        console.log(`Login exitoso: ${usuario.nombre_completo} (${usuario.nombre_rol})`);
+        
+        res.json({
+            success: true,
+            usuario: {
+                id: usuario.id_usuario,
+                nombre: usuario.nombre_completo,
+                correo: usuario.correo,
+                rol: usuario.nombre_rol,
+                id_rol: usuario.id_rol
+            }
+        });
+
+    } catch (err) {
+        console.error('Error en login:', err);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
 });
 
-app.get('/pedidos', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/pedidos.html'));
-});
 
-// Ruta para el dashboard
+
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views/index.html'));
+    
+    // Por ahora, siempre redirigir al login
+    res.redirect('/login.html');
 });
 
-// Fallback to index.html for any other requests (SPA behavior if needed, or just 404)
-app.get('*', (req, res) => {
+app.get('/dashboard', verificarAutenticacion, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+
+app.get('/productos', verificarAutenticacion, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'productos.html'));
+});
+
+
+app.get('/pedidos', verificarAutenticacion, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'pedidos.html'));
+});
+
+app.get('/mesas.html', verificarAutenticacion, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'mesas.html'));
+});
+
+app.get('/caja.html', verificarAutenticacion, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'caja.html'));
+});
+
+app.get('/cocina.html', verificarAutenticacion, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'cocina.html'));
+});
+
+app.get('/usuarios.html', verificarAutenticacion, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'usuarios.html'));
+});
+
+app.get('/menu.html', verificarAutenticacion, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'menu.html'));
+});
+
+app.get('/inventario.html', verificarAutenticacion, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'inventario.html'));
+});
+
+app.get('/reportes.html', verificarAutenticacion, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'reportes.html'));
+});
+
+app.get('/login.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get('/recuperar-password.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'recuperar-password.html'));
+});
+
+app.get('/restablecer-password.html', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'restablecer-password.html'));
+});
+
+// FALLBACK
+app.get('*', (req, res) => {
+    res.redirect('/');
+});
+
 app.listen(PORT, async () => {
-    console.log(`✅ Servidor ejecutándose en http://localhost:${PORT}`);
+    console.log(`Servidor ejecutándose en http://localhost:${PORT}`);
     
     try {
         await getConnection();

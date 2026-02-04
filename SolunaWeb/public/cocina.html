@@ -26,44 +26,51 @@
             border: 2px solid #e3e6f0;
             transition: all 0.3s;
         }
-        
+
         .pedido-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
         }
-        
+
         .pedido-card.urgente {
             border-left: 5px solid #e74a3b;
         }
-        
+
         .pedido-card.preparando {
             border-left: 5px solid #f6c23e;
         }
-        
+
         .pedido-card.listo {
             border-left: 5px solid #1cc88a;
         }
-        
+
         .producto-item {
             padding: 8px;
             margin-bottom: 5px;
             background: #f8f9fc;
             border-radius: 5px;
         }
-        
+
         .tiempo-pedido {
             font-size: 2rem;
             font-weight: bold;
         }
-        
+
         .alerta-tiempo {
             color: #e74a3b;
             animation: parpadeo 1s infinite;
         }
-        
+
         @keyframes parpadeo {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
     </style>
 
@@ -88,11 +95,12 @@
             <!-- Divider -->
             <hr class="sidebar-divider my-0">
 
-            <!-- Nav Item - Dashboard -->
-            <li class="nav-item">
+            <!-- Nav Item - Dashboard (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="index.html">
                     <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Dashboard</span></a>
+                    <span>Dashboard</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -103,25 +111,28 @@
                 Gestión de Pedidos
             </div>
 
-            <!-- Nav Item - Pedidos -->
-            <li class="nav-item">
+            <!-- Nav Item - Pedidos (Cajero) -->
+            <li class="nav-item" data-roles="Cajero">
                 <a class="nav-link" href="pedidos.html">
                     <i class="fas fa-fw fa-clipboard-list"></i>
-                    <span>Pedidos</span></a>
+                    <span>Pedidos</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Menú -->
-            <li class="nav-item">
+            <!-- Nav Item - Menú (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="menu.html">
                     <i class="fas fa-fw fa-book-open"></i>
-                    <span>Menú</span></a>
+                    <span>Menú</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Mesas -->
-            <li class="nav-item">
+            <!-- Nav Item - Control de Salón (Mesero) -->
+            <li class="nav-item" data-roles="Mesero">
                 <a class="nav-link" href="mesas.html">
                     <i class="fas fa-fw fa-chair"></i>
-                    <span>Control de Salón</span></a>
+                    <span>Control de Salón</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -132,25 +143,28 @@
                 Operaciones
             </div>
 
-            <!-- Nav Item - Caja -->
-            <li class="nav-item">
+            <!-- Nav Item - Caja (Cajero) -->
+            <li class="nav-item" data-roles="Cajero">
                 <a class="nav-link" href="caja.html">
                     <i class="fas fa-fw fa-cash-register"></i>
-                    <span>Caja</span></a>
+                    <span>Caja</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Cocina (ACTIVO) -->
-            <li class="nav-item active">
+            <!-- Nav Item - Cocina (Cocinero) -->
+            <li class="nav-item active" data-roles="Cocinero">
                 <a class="nav-link" href="cocina.html">
                     <i class="fas fa-fw fa-fire"></i>
-                    <span>Cocina</span></a>
+                    <span>Cocina</span>
+                </a>
             </li>
 
-            <!-- Nav Item - Inventario -->
-            <li class="nav-item">
+            <!-- Nav Item - Inventario (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="inventario.html">
                     <i class="fas fa-fw fa-boxes"></i>
-                    <span>Inventario</span></a>
+                    <span>Inventario</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -161,22 +175,28 @@
                 Administración
             </div>
 
-            <!-- Nav Item - Usuarios -->
-            <li class="nav-item">
+            <!-- Nav Item - Usuarios (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="usuarios.html">
                     <i class="fas fa-fw fa-users"></i>
-                    <span>Usuarios</span></a>
+                    <span>Usuarios</span>
+                </a>
             </li>
-            <li class="nav-item">
+
+            <!-- Nav Item - Gestión de Menú (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="productos.html">
                     <i class="fas fa-fw fa-utensils"></i>
-                    <span>Gestión de Menú</span></a>
+                    <span>Gestión de Menú</span>
+                </a>
             </li>
-            <!-- Nav Item - Reportes -->
-            <li class="nav-item">
+
+            <!-- Nav Item - Reportes (Administrador) -->
+            <li class="nav-item" data-roles="Administrador">
                 <a class="nav-link" href="reportes.html">
                     <i class="fas fa-fw fa-chart-bar"></i>
-                    <span>Reportes</span></a>
+                    <span>Reportes</span>
+                </a>
             </li>
 
             <!-- Divider -->
@@ -228,8 +248,7 @@
                             <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
                                 data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="mr-2 d-none d-lg-inline text-gray-600 small" id="userName">Cocinero</span>
-                                <img class="img-profile rounded-circle"
-                                    src="img/undraw_profile.svg">
+                                <img class="img-profile rounded-circle" src="img/undraw_profile.svg">
                             </a>
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
                                 aria-labelledby="userDropdown">
@@ -261,7 +280,8 @@
                     <div class="row mb-4">
                         <div class="col-lg-8">
                             <div class="btn-group" role="group">
-                                <button type="button" class="btn btn-warning active" onclick="filtrarPorEstado('pendiente')">
+                                <button type="button" class="btn btn-warning active"
+                                    onclick="filtrarPorEstado('pendiente')">
                                     Pendientes
                                 </button>
                                 <button type="button" class="btn btn-info" onclick="filtrarPorEstado('en_preparacion')">
@@ -413,6 +433,7 @@
 
     <!-- Script personalizado para cocina -->
     <script src="js/cocina.js"></script>
+    <script src="js/auth-guard.js"></script>
 
 </body>
 
