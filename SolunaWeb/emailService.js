@@ -8,20 +8,22 @@ const nodemailer = require('nodemailer');
 // PASO 3 Ve a: https://myaccount.google.com/apppasswords
 // PASO 4 Genera la contraseña de aplicación para "Correo"
 // y esa contra que te genera ponerla aca 
+
+//fclc ljkw zewi ypkv
 const transporter = nodemailer.createTransport({
     service: 'gmail', // Puedes usar: gmail, outlook, yahoo, etc.
     auth: {
-        user: 'mdeeshbb.0330@gmail.com', // Tu correo
-        pass: '' // Contraseña de aplicación de Gmail
+        user: 'jel2407@gmail.com', // Tu correo
+        pass: 'fclc ljkw zewi ypkv' // Contraseña de aplicación de Gmail
     }
 });
 
 // Función para enviar email de recuperación
 async function enviarEmailRecuperacion(destinatario, token, nombreUsuario) {
     const enlaceRecuperacion = `http://localhost:3000/restablecer-password.html?token=${token}`;
-    
+
     const mailOptions = {
-        from: '"Restaurante Soluna" <mdeeshbb.0330@gmail.com>',
+        from: '"Restaurante Soluna" <jel2407@gmail.com>',
         to: destinatario,
         subject: 'Recuperación de Contraseña - Restaurante Soluna',
         html: `
