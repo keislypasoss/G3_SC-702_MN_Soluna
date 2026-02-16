@@ -141,9 +141,9 @@ app.post('/api/recuperar-password', async (req, res) => {
 
         if (userResult.recordset.length === 0) {
             // no revelamos si el email existe por temas de segu
-            return res.json({ 
-                success: true, 
-                message: 'Si tu correo existe, vas a recibir las instrucciones para recuperar tu contraseña.' 
+            return res.json({
+                success: true,
+                message: 'Si tu correo existe, vas a recibir las instrucciones para recuperar tu contraseña.'
             });
         }
 
@@ -151,8 +151,8 @@ app.post('/api/recuperar-password', async (req, res) => {
 
         // revisar que el usuario esté activo
         if (!usuario.estado) {
-            return res.status(400).json({ 
-                error: 'Esta cuenta está desactivada, Por favor ponte en contacto con el administrador.' 
+            return res.status(400).json({
+                error: 'Esta cuenta está desactivada, Por favor ponte en contacto con el administrador.'
             });
         }
 
@@ -174,9 +174,9 @@ app.post('/api/recuperar-password', async (req, res) => {
         // enviar el email
         await enviarEmailRecuperacion(correo, token, usuario.nombre_completo);
 
-        res.json({ 
-            success: true, 
-            message: 'Se te envio un correo con las instrucciones para recuperar tu contraseña.' 
+        res.json({
+            success: true,
+            message: 'Se te envio un correo con las instrucciones para recuperar tu contraseña.'
         });
 
     } catch (err) {
@@ -203,15 +203,15 @@ app.get('/api/verificar-token/:token', async (req, res) => {
             `);
 
         if (result.recordset.length === 0) {
-            return res.status(400).json({ 
-                valid: false, 
-                error: 'El enlace es inválido o ha expirado' 
+            return res.status(400).json({
+                valid: false,
+                error: 'El enlace es inválido o ha expirado'
             });
         }
 
-        res.json({ 
-            valid: true, 
-            usuario: result.recordset[0].nombre_completo 
+        res.json({
+            valid: true,
+            usuario: result.recordset[0].nombre_completo
         });
 
     } catch (err) {
@@ -237,8 +237,8 @@ app.post('/api/restablecer-password', async (req, res) => {
             `);
 
         if (tokenResult.recordset.length === 0) {
-            return res.status(400).json({ 
-                error: 'El enlace es inválido o ha expirado' 
+            return res.status(400).json({
+                error: 'El enlace es inválido o ha expirado'
             });
         }
 
@@ -256,9 +256,9 @@ app.post('/api/restablecer-password', async (req, res) => {
             .input('token', sql.NVarChar, token)
             .query('UPDATE Tokens_Recuperacion SET usado = 1 WHERE token = @token');
 
-        res.json({ 
-            success: true, 
-            message: 'Contraseña restablecida correctamente' 
+        res.json({
+            success: true,
+            message: 'Contraseña restablecida correctamente'
         });
 
     } catch (err) {
@@ -352,11 +352,12 @@ app.get('/api/pedidos/:id/detalle', async (req, res) => {
         const result = await pool.request()
             .input('id', sql.Int, req.params.id)
             .query(`
-                SELECT d.*, p.nombre_producto
+                SELECT d.*, p.nombre_producto, c.nombre as nombre_categoria
                 FROM Detalle_Pedidos d
                 INNER JOIN Productos p ON d.id_producto = p.id_producto
+                LEFT JOIN Categorias c ON p.id_categoria = c.id_categoria
                 WHERE d.id_pedido = @id
-                ORDER BY d.id_detalle
+                ORDER BY c.nombre, d.id_detalle
             `);
         res.json(result.recordset);
     } catch (err) {
@@ -392,23 +393,23 @@ app.put('/api/detalle-pedido/:id', async (req, res) => {
 
     try {
         const pool = await getConnection();
-        
+
         // primero conseguimos el detalle actual
         const detalleActual = await pool.request()
             .input('id', sql.Int, id)
             .query('SELECT * FROM Detalle_Pedidos WHERE id_detalle = @id');
-        
+
         if (detalleActual.recordset.length === 0) {
             return res.status(404).json({ error: 'Producto no encontrado en el pedido' });
         }
-        
+
         // actualizamos el producto
         await pool.request()
             .input('id', sql.Int, id)
             .input('cantidad', sql.Int, cantidad || detalleActual.recordset[0].cantidad)
             .input('notas', sql.NVarChar, notas || detalleActual.recordset[0].notas)
-            .input('precio_unitario', sql.Decimal(10, 2), 
-                   precio_unitario || detalleActual.recordset[0].precio_unitario)
+            .input('precio_unitario', sql.Decimal(10, 2),
+                precio_unitario || detalleActual.recordset[0].precio_unitario)
             .query(`
                 UPDATE Detalle_Pedidos
                 SET cantidad = @cantidad,
@@ -416,7 +417,7 @@ app.put('/api/detalle-pedido/:id', async (req, res) => {
                     precio_unitario = @precio_unitario
                 WHERE id_detalle = @id
             `);
-        
+
         // actualizamos el total del pedido
         const idPedido = detalleActual.recordset[0].id_pedido;
         await pool.request()
@@ -431,9 +432,9 @@ app.put('/api/detalle-pedido/:id', async (req, res) => {
                 WHERE id_pedido = @id_pedido
             `);
 
-        res.json({ 
+        res.json({
             message: 'Producto modificado correctamente',
-            success: true 
+            success: true
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -447,26 +448,26 @@ app.post('/api/detalle-pedido/:id/extra', async (req, res) => {
 
     try {
         const pool = await getConnection();
-        
+
         // obtenemos el detalle actual
         const detalleResult = await pool.request()
             .input('id', sql.Int, id)
             .query('SELECT * FROM Detalle_Pedidos WHERE id_detalle = @id');
-        
+
         if (detalleResult.recordset.length === 0) {
             return res.status(404).json({ error: 'Producto no encontrado en el pedido' });
         }
-        
+
         const detalle = detalleResult.recordset[0];
-        
+
         // formateamos las nuevas notas
-        const nuevasNotas = detalle.notas 
+        const nuevasNotas = detalle.notas
             ? `${detalle.notas} | Extra: ${descripcion_extra} (+₡${costo_extra})`
             : `Extra: ${descripcion_extra} (+₡${costo_extra})`;
-        
+
         // calculamos nuevo precio
         const nuevoPrecio = parseFloat(detalle.precio_unitario) + parseFloat(costo_extra);
-        
+
         await pool.request()
             .input('id', sql.Int, id)
             .input('notas', sql.NVarChar, nuevasNotas)
@@ -477,7 +478,7 @@ app.post('/api/detalle-pedido/:id/extra', async (req, res) => {
                     precio_unitario = @precio_unitario
                 WHERE id_detalle = @id
             `);
-        
+
         // actualizar total del pedido
         await pool.request()
             .input('id_pedido', sql.Int, detalle.id_pedido)
@@ -491,9 +492,9 @@ app.post('/api/detalle-pedido/:id/extra', async (req, res) => {
                 WHERE id_pedido = @id_pedido
             `);
 
-        res.json({ 
+        res.json({
             message: 'Extra agregado correctamente',
-            success: true 
+            success: true
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -505,23 +506,23 @@ app.delete('/api/detalle-pedido/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const pool = await getConnection();
-        
+
         // primero obtenemos el id_pedido para luego actualizar el total 
         const detalleResult = await pool.request()
             .input('id', sql.Int, id)
             .query('SELECT id_pedido FROM Detalle_Pedidos WHERE id_detalle = @id');
-        
+
         if (detalleResult.recordset.length === 0) {
             return res.status(404).json({ error: 'Producto no encontrado' });
         }
-        
+
         const idPedido = detalleResult.recordset[0].id_pedido;
-        
+
         // eliminamos el producto
         await pool.request()
             .input('id', sql.Int, id)
             .query('DELETE FROM Detalle_Pedidos WHERE id_detalle = @id');
-        
+
         // actualizamos el total del pedido
         await pool.request()
             .input('id_pedido', sql.Int, idPedido)
@@ -535,11 +536,90 @@ app.delete('/api/detalle-pedido/:id', async (req, res) => {
                 WHERE id_pedido = @id_pedido
             `);
 
-        res.json({ 
+        res.json({
             message: 'Producto eliminado del pedido',
-            success: true 
+            success: true
         });
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Crear nuevo pedido
+app.post('/api/pedidos', async (req, res) => {
+    try {
+        const { id_mesa, id_usuario, id_cliente, productos } = req.body;
+        const pool = await getConnection();
+
+        // 1. Crear el Pedido header (Workaround for obscure 'Invalid column name id_mesa' error on INSERT)
+        // Insertamos sin id_mesa inicialmente (es nullable según schema) y luego actualizamos
+        const pedidoResult = await pool.request()
+            .input('id_usuario', sql.Int, id_usuario)
+            .input('id_cliente', sql.Int, id_cliente || null)
+            .input('total', sql.Decimal(10, 2), 0)
+            .query(`
+                INSERT INTO Pedidos (id_usuario, id_cliente, fecha_pedido, estado, total)
+                OUTPUT INSERTED.id_pedido
+                VALUES (@id_usuario, @id_cliente, GETDATE(), 'Pendiente', @total)
+            `);
+
+        const idPedido = pedidoResult.recordset[0].id_pedido;
+
+        // Actualizar id_mesa si existe
+        if (id_mesa) {
+            await pool.request()
+                .input('id_pedido', sql.Int, idPedido)
+                .input('id_mesa', sql.Int, id_mesa)
+                .query("UPDATE Pedidos SET id_mesa = @id_mesa WHERE id_pedido = @id_pedido");
+        }
+
+        let totalPedido = 0;
+
+        // 2. Insertar detalles
+        if (productos && productos.length > 0) {
+            for (const prod of productos) {
+                // Obtener precio actual del producto
+                const precioResult = await pool.request()
+                    .input('id_producto', sql.Int, prod.id_producto)
+                    .query('SELECT precio FROM Productos WHERE id_producto = @id_producto');
+
+                if (precioResult.recordset.length === 0) continue;
+
+                const precioUnitario = precioResult.recordset[0].precio;
+                const subtotal = precioUnitario * prod.cantidad;
+                totalPedido += subtotal;
+
+                await pool.request()
+                    .input('id_pedido', sql.Int, idPedido)
+                    .input('id_producto', sql.Int, prod.id_producto)
+                    .input('cantidad', sql.Int, prod.cantidad)
+                    .input('precio_unitario', sql.Decimal(10, 2), precioUnitario)
+                    .input('notas', sql.NVarChar, prod.notas || '')
+                    .input('tiempo_plato', sql.NVarChar, prod.tiempo_plato || 'Principal')
+                    .query(`
+                        INSERT INTO Detalle_Pedidos (id_pedido, id_producto, cantidad, precio_unitario, notas, tiempo_plato)
+                        VALUES (@id_pedido, @id_producto, @cantidad, @precio_unitario, @notas, @tiempo_plato)
+                    `);
+            }
+
+            // 3. Actualizar total del pedido
+            await pool.request()
+                .input('id_pedido', sql.Int, idPedido)
+                .input('total', sql.Decimal(10, 2), totalPedido)
+                .query('UPDATE Pedidos SET total = @total WHERE id_pedido = @id_pedido');
+        }
+
+        // 4. Actualizar estado de la mesa a Ocupada si no lo estaba
+        if (id_mesa) {
+            await pool.request()
+                .input('id_mesa', sql.Int, id_mesa)
+                .query("UPDATE Mesas SET estado = 'Ocupada' WHERE id_mesa = @id_mesa");
+        }
+
+        res.json({ success: true, message: 'Pedido creado correctamente', id_pedido: idPedido });
+
+    } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -589,19 +669,223 @@ app.get('/api/pedidos/estado/:estado', async (req, res) => {
     }
 });
 
+// Endpoint específico para cocina - obtener pedidos activos con detalles
+app.get('/api/cocina/pedidos', async (req, res) => {
+    try {
+        const pool = await getConnection();
+
+        // 1. Obtener pedidos activos (Pendiente, En Cocina)
+        const pedidosResult = await pool.request().query(`
+            SELECT 
+                p.id_pedido,
+                p.id_mesa,
+                p.fecha_pedido,
+                p.estado as estado_pedido,
+                p.total,
+                m.numero_mesa,
+                c.nombre_completo as nombre_cliente,
+                u.nombre_completo as nombre_mesero
+            FROM Pedidos p
+            LEFT JOIN Mesas m ON p.id_mesa = m.id_mesa
+            LEFT JOIN Clientes c ON p.id_cliente = c.id_cliente
+            LEFT JOIN Usuarios u ON p.id_usuario = u.id_usuario
+            WHERE p.estado IN ('Pendiente', 'En Cocina', 'Listo')
+            ORDER BY p.fecha_pedido ASC
+        `);
+
+        const pedidos = pedidosResult.recordset;
+
+        // 2. Para cada pedido, obtener sus detalles
+        for (let pedido of pedidos) {
+            const detallesResult = await pool.request()
+                .input('id_pedido', sql.Int, pedido.id_pedido)
+                .query(`
+                    SELECT 
+                        dp.id_detalle,
+                        dp.cantidad,
+                        dp.precio_unitario,
+                        dp.notas,
+                        dp.tiempo_plato,
+                        p.nombre_producto,
+                        c.nombre as nombre_categoria
+                    FROM Detalle_Pedidos dp
+                    JOIN Productos p ON dp.id_producto = p.id_producto
+                    LEFT JOIN Categorias c ON p.id_categoria = c.id_categoria
+                    WHERE dp.id_pedido = @id_pedido
+                `);
+
+            pedido.detalles = detallesResult.recordset;
+        }
+
+        res.json(pedidos);
+
+    } catch (err) {
+        console.error('Error en /api/cocina/pedidos:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 app.put('/api/pedidos/:id/estado', async (req, res) => {
     try {
         const { id } = req.params;
         const { estado } = req.body;
         const pool = await getConnection();
-        
+
         await pool.request()
             .input('id', sql.Int, id)
             .input('estado', sql.NVarChar, estado)
             .query('UPDATE Pedidos SET estado = @estado WHERE id_pedido = @id');
-            
+
         res.json({ success: true, message: 'Estado actualizado' });
     } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+// --- API ENDPOINTS PARA MESAS ---
+app.get('/api/mesas', async (req, res) => {
+    try {
+        const pool = await getConnection();
+        const result = await pool.request().query(`
+            SELECT id_mesa, numero_mesa, capacidad, estado
+            FROM Mesas
+            ORDER BY numero_mesa
+        `);
+        res.json(result.recordset);
+    } catch (err) {
+        console.error('Error en /api/mesas:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.patch('/api/mesas/:id/estado', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { estado } = req.body;
+
+        const pool = await getConnection();
+        await pool.request()
+            .input('id', sql.Int, id)
+            .input('estado', sql.NVarChar, estado)
+            .query('UPDATE Mesas SET estado = @estado WHERE id_mesa = @id');
+
+        res.json({ success: true, message: 'Estado de mesa actualizado' });
+    } catch (err) {
+        console.error('Error actualizando mesa:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- API ENDPOINTS PARA CAJA ---
+// Obtener monto final de la última sesión cerrada
+app.get('/api/caja/ultima-sesion', async (req, res) => {
+    try {
+        const pool = await getConnection();
+        const result = await pool.request().query(`
+            SELECT TOP 1 monto_final 
+            FROM Cajas_Sesiones 
+            WHERE estado = 'Cerrada' AND monto_final IS NOT NULL
+            ORDER BY fecha_cierre DESC
+        `);
+
+        if (result.recordset.length > 0) {
+            res.json({ monto_sugerido: result.recordset[0].monto_final });
+        } else {
+            res.json({ monto_sugerido: null });
+        }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Verificar estado de la caja
+app.get('/api/caja/estado', async (req, res) => {
+    try {
+        const pool = await getConnection();
+        // NOTA: Usamos Cajas_Sesiones (Plural)
+        const sesionResult = await pool.request().query(`SELECT TOP 1 * FROM Cajas_Sesiones WHERE estado = 'Abierta' ORDER BY fecha_apertura DESC`);
+        const sesion = sesionResult.recordset.length > 0 ? sesionResult.recordset[0] : null;
+
+        // Si hay sesión abierta, el id es sesion.id_sesion
+        let ventas = 0;
+        let cantidad_facturas = 0;
+
+        if (sesion) {
+            const ventasResult = await pool.request()
+                .input('id_sesion', sql.Int, sesion.id_sesion)
+                .query(`
+                    SELECT ISNULL(SUM(total_pagar), 0) as total_ventas, COUNT(*) as cantidad_facturas
+                    FROM Facturas 
+                    WHERE id_sesion_caja = @id_sesion
+                `);
+            ventas = ventasResult.recordset[0].total_ventas;
+            cantidad_facturas = ventasResult.recordset[0].cantidad_facturas;
+        }
+
+        res.json({ abierta: !!sesion, sesion: sesion, ventas: ventas, cantidad_facturas: cantidad_facturas });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/caja/abrir', async (req, res) => {
+    try {
+        const { monto_inicial, id_usuario } = req.body;
+        const pool = await getConnection();
+        const abiertaResult = await pool.request().query("SELECT COUNT(*) as count FROM Cajas_Sesiones WHERE estado = 'Abierta'");
+        if (abiertaResult.recordset[0].count > 0) return res.status(400).json({ error: 'Ya existe una caja abierta.' });
+
+        await pool.request()
+            .input('id_usuario', sql.Int, id_usuario)
+            .input('monto_inicial', sql.Decimal(10, 2), monto_inicial)
+            .query("INSERT INTO Cajas_Sesiones (id_usuario, monto_inicial, estado) VALUES (@id_usuario, @monto_inicial, 'Abierta')");
+        res.json({ success: true, message: 'Caja abierta' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post('/api/caja/cerrar', async (req, res) => {
+    try {
+        const { id_sesion, monto_final, total_ventas } = req.body;
+        const pool = await getConnection();
+        await pool.request()
+            .input('id_sesion', sql.Int, id_sesion)
+            .input('monto_final', sql.Decimal(10, 2), monto_final)
+            .input('total_ventas', sql.Decimal(10, 2), total_ventas)
+            .query(`UPDATE Cajas_Sesiones SET estado = 'Cerrada', fecha_cierre = GETDATE(), monto_final = @monto_final, total_ventas_sistema = @total_ventas WHERE id_sesion = @id_sesion`);
+        res.json({ success: true, message: 'Caja cerrada' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Crear Factura (Pago)
+app.post('/api/facturas', async (req, res) => {
+    try {
+        const { id_pedido, id_sesion_caja, metodo_pago, total_pagar } = req.body;
+        const pool = await getConnection();
+
+        // 1. Calcular subtotal e impuesto (13%)
+        const subtotal = total_pagar / 1.13;
+        const impuesto = total_pagar - subtotal;
+
+        // 2. Insertar Factura
+        await pool.request()
+            .input('id_pedido', sql.Int, id_pedido)
+            .input('id_sesion_caja', sql.Int, id_sesion_caja)
+            .input('metodo_pago', sql.NVarChar, metodo_pago)
+            .input('subtotal', sql.Decimal(10, 2), subtotal)
+            .input('impuesto', sql.Decimal(10, 2), impuesto)
+            .input('total_pagar', sql.Decimal(10, 2), total_pagar)
+            .query(`
+                INSERT INTO Facturas (id_pedido, id_sesion_caja, metodo_pago, subtotal, impuesto, total_pagar)
+                VALUES (@id_pedido, @id_sesion_caja, @metodo_pago, @subtotal, @impuesto, @total_pagar)
+            `);
+
+        // 3. Actualizar Pedido a 'Pagado'
+        await pool.request()
+            .input('id_pedido', sql.Int, id_pedido)
+            .query("UPDATE Pedidos SET estado = 'Pagado' WHERE id_pedido = @id_pedido");
+
+        res.json({ success: true, message: 'Factura creada y pedido pagado' });
+    } catch (err) {
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -673,7 +957,7 @@ app.post('/api/login', async (req, res) => {
         }
 
         console.log(`Login exitoso: ${usuario.nombre_completo} (${usuario.nombre_rol})`);
-        
+
         res.json({
             success: true,
             usuario: {
@@ -694,7 +978,7 @@ app.post('/api/login', async (req, res) => {
 
 
 app.get('/', (req, res) => {
-    
+
     // Por ahora, siempre redirigir al login
     res.redirect('/login.html');
 });
@@ -760,10 +1044,30 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, async () => {
     console.log(`Servidor ejecutándose en http://localhost:${PORT}`);
-    
+
     try {
-        await getConnection();
+        const pool = await getConnection();
         console.log(' Conexión a la base de datos establecida');
+
+        try {
+            await pool.request().query("SELECT 1 FROM Caja_Sesiones");
+        } catch {
+            await pool.request().query(`
+                CREATE TABLE Caja_Sesiones (
+                    id_sesion INT IDENTITY(1,1) PRIMARY KEY,
+                    id_usuario INT NOT NULL,
+                    fecha_apertura DATETIME DEFAULT GETDATE(),
+                    fecha_cierre DATETIME NULL,
+                    monto_inicial DECIMAL(10,2) NOT NULL,
+                    monto_final DECIMAL(10,2) NULL,
+                    total_ventas DECIMAL(10,2) DEFAULT 0,
+                    estado NVARCHAR(20) DEFAULT 'Abierta',
+                    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario)
+                )
+            `);
+            console.log(' Tabla Caja_Sesiones creada');
+        }
+
     } catch (err) {
         console.error(' Error al conectar con la base de datos:', err.message);
     }
