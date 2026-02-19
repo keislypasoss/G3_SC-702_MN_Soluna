@@ -634,13 +634,26 @@ app.get('/api/pedidos', async (req, res) => {
                 m.numero_mesa,
                 c.nombre_completo as nombre_cliente,
                 u.nombre_completo as nombre_mesero,
-                (SELECT COUNT(*) FROM Detalle_Pedidos dp WHERE dp.id_pedido = p.id_pedido) as cantidad_productos
+                (SELECT COUNT(*) FROM Detalle_Pedidos dp WHERE dp.id_pedido = p.id_pedido) as cantidad_productos,
+                CASE 
+                    WHEN p.fecha_entrega IS NOT NULL 
+                    THEN FORMAT(p.fecha_entrega, 'hh:mm tt') 
+                    ELSE NULL 
+                END as hora_entrega
             FROM Pedidos p
             LEFT JOIN Mesas m ON p.id_mesa = m.id_mesa
             LEFT JOIN Clientes c ON p.id_cliente = c.id_cliente
             LEFT JOIN Usuarios u ON p.id_usuario = u.id_usuario
             WHERE p.estado NOT IN ('Pagado', 'Cancelado')
-            ORDER BY p.fecha_pedido DESC
+            ORDER BY 
+                CASE p.estado
+                    WHEN 'Pendiente' THEN 1
+                    WHEN 'En Cocina' THEN 2
+                    WHEN 'Listo' THEN 3
+                    WHEN 'Entregado' THEN 4
+                    ELSE 5
+                END,
+                p.fecha_pedido ASC
         `);
         res.json(result.recordset);
     } catch (err) {
@@ -741,6 +754,45 @@ app.put('/api/pedidos/:id/estado', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+
+// Marcar pedido como entregado (con hora de entrega)
+app.put('/api/pedidos/:id/entregar', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await getConnection();
+        
+        // Actualizar estado a 'Entregado' y registrar fecha_entrega
+        await pool.request()
+            .input('id', sql.Int, id)
+            .input('fecha_entrega', sql.DateTime, new Date(new Date().getTime() - (6 * 60 * 60 * 1000)))
+            .query(`
+                UPDATE Pedidos 
+                SET estado = 'Entregado', 
+                    fecha_entrega = @fecha_entrega 
+                WHERE id_pedido = @id
+            `);
+
+        // Si el pedido tenía mesa, liberarla
+        await pool.request()
+            .input('id', sql.Int, id)
+            .query(`
+                UPDATE Mesas 
+                SET estado = 'Libre' 
+                WHERE id_mesa = (SELECT id_mesa FROM Pedidos WHERE id_pedido = @id)
+            `);
+
+        res.json({ 
+            success: true, 
+            message: 'Pedido marcado como entregado',
+            fecha_entrega: new Date()
+        });
+    } catch (err) {
+        console.error('Error al marcar como entregado:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 
 // --- API ENDPOINTS PARA MESAS ---

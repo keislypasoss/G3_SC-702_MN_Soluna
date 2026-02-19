@@ -102,75 +102,111 @@ $(document).ready(function () {
                     return;
                 }
                 
-                let html = '';
-                let pendientes = 0, enCocina = 0, listos = 0;
-                
-                pedidos.forEach(p => {
-                    // contar por estado
-                    if (p.estado === 'Pendiente') pendientes++;
-                    if (p.estado === 'En Cocina') enCocina++;
-                    if (p.estado === 'Listo') listos++;
-                    
-                    const estadoClass = {
-                        'Pendiente': 'secondary',
-                        'En Cocina': 'warning',
-                        'Listo': 'success',
-                        'Entregado': 'info',
-                        'Pagado': 'primary'
-                    }[p.estado] || 'secondary';
-                    
-                    // formatear la información del cliente
-                    let clienteInfo = 'Sin información';
-                    if (p.numero_mesa && p.nombre_cliente) {
-                        clienteInfo = `Mesa ${p.numero_mesa} - ${p.nombre_cliente}`;
-                    } else if (p.nombre_cliente) {
-                        clienteInfo = `Delivery - ${p.nombre_cliente}`;
-                    } else if (p.numero_mesa) {
-                        clienteInfo = `Mesa ${p.numero_mesa}`;
-                    }
-                    
-                    // formatear la hora
-                    const fecha = new Date(p.fecha_pedido);
-                    const hora = fecha.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                    
-                    html += `
-                        <tr>
-                            <td>#${p.id_pedido}</td>
-                            <td>${clienteInfo}</td>
-                            <td>${p.cantidad_productos || 0} productos</td>
-                            <td><strong>₡${parseFloat(p.total || 0).toFixed(2)}</strong></td>
-                            <td>
-                                <span class="badge badge-${estadoClass} badge-estado">
-                                    ${p.estado}
-                                </span>
-                            </td>
-                            <td>${hora}</td>
-                            <td>
-                                <button class="btn btn-sm btn-primary btn-detalle" 
-                                        data-id="${p.id_pedido}"
-                                        title="Ver y modificar detalle">
-                                    <i class="fas fa-edit"></i> Modificar
-                                </button>
-                            </td>
-                        </tr>
-                    `;
-                });
-                
-                tbody.html(html);
-                
-                // actualizar los contadores
-                $('#contadorPedidos').text(`${pedidos.length} pedidos`);
-                $('#pedidosHoy').text(pedidos.length);
-                $('#pendientes').text(pendientes);
-                $('#enCocina').text(enCocina);
-                $('#listos').text(listos);
-                
-                //  evento para los botones
-                $('.btn-detalle').off('click').on('click', function() {
-                    const idPedido = $(this).data('id');
-                    cargarDetallePedido(idPedido);
-                    $('#modalDetallePedido').modal('show');
-                });
+ let html = '';
+let pendientes = 0, enCocina = 0, listos = 0, entregados = 0;
+
+pedidos.forEach(p => {
+    // contar por estado
+    if (p.estado === 'Pendiente') pendientes++;
+    if (p.estado === 'En Cocina') enCocina++;
+    if (p.estado === 'Listo') listos++;
+    if (p.estado === 'Entregado') entregados++;
+    
+    const estadoClass = {
+        'Pendiente': 'secondary',
+        'En Cocina': 'warning',
+        'Listo': 'success',
+        'Entregado': 'info',
+        'Pagado': 'primary'
+    }[p.estado] || 'secondary';
+    
+    // formatear la información del cliente
+    let clienteInfo = 'Sin información';
+    if (p.numero_mesa && p.nombre_cliente) {
+        clienteInfo = `Mesa ${p.numero_mesa} - ${p.nombre_cliente}`;
+    } else if (p.nombre_cliente) {
+        clienteInfo = `Delivery - ${p.nombre_cliente}`;
+    } else if (p.numero_mesa) {
+        clienteInfo = `Mesa ${p.numero_mesa}`;
+    }
+    
+    // formatear la hora
+    const fecha = new Date(p.fecha_pedido);
+    const hora = fecha.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    // Determinar qué botones mostrar según el estado
+    let botonesAccion = '';
+    
+    if (p.estado === 'Listo') {
+        // Solo mostrar botón de Entregar para pedidos Listos
+        botonesAccion = `
+            <button class="btn btn-sm btn-success btn-entregar" 
+                    data-id="${p.id_pedido}"
+                    data-cliente="${clienteInfo}"
+                    title="Marcar como entregado">
+                <i class="fas fa-check-circle"></i> Entregar
+            </button>
+        `;
+    } else if (p.estado === 'Entregado' && p.hora_entrega) {
+        // Mostrar hora de entrega
+        botonesAccion = `
+            <span class="badge badge-info">
+                <i class="fas fa-clock"></i> ${p.hora_entrega}
+            </span>
+        `;
+    } else {
+        // Botón de modificar para otros estados
+        botonesAccion = `
+            <button class="btn btn-sm btn-primary btn-detalle" 
+                    data-id="${p.id_pedido}"
+                    title="Ver y modificar detalle">
+                <i class="fas fa-edit"></i> Modificar
+            </button>
+        `;
+    }
+    
+    html += `
+        <tr data-estado="${p.estado}">
+            <td>#${p.id_pedido}</td>
+            <td>${clienteInfo}</td>
+            <td>${p.cantidad_productos || 0} productos</td>
+            <td><strong>₡${parseFloat(p.total || 0).toFixed(2)}</strong></td>
+            <td>
+                <span class="badge badge-${estadoClass} badge-estado">
+                    ${p.estado}
+                </span>
+            </td>
+            <td>${hora}</td>
+            <td class="text-center">
+                ${botonesAccion}
+            </td>
+        </tr>
+    `;
+});
+
+tbody.html(html);
+
+// actualizar los contadores
+$('#contadorPedidos').text(`${pedidos.length} pedidos`);
+$('#pedidosHoy').text(pedidos.length);
+$('#pendientes').text(pendientes);
+$('#enCocina').text(enCocina);
+$('#listos').text(listos);
+$('#entregados').text(entregados); // Agregar este span en el HTML si quieres
+
+// Evento para botones de entregar
+$('.btn-entregar').off('click').on('click', function() {
+    const idPedido = $(this).data('id');
+    const clienteInfo = $(this).data('cliente');
+    mostrarModalConfirmarEntrega(idPedido, clienteInfo);
+});
+
+// Evento para botones de detalle (modificar)
+$('.btn-detalle').off('click').on('click', function() {
+    const idPedido = $(this).data('id');
+    cargarDetallePedido(idPedido);
+    $('#modalDetallePedido').modal('show');
+});
                 
                 console.log(`✅ Cargados ${pedidos.length} pedidos reales`);
             },
@@ -290,6 +326,70 @@ $(document).ready(function () {
         });
     }
     
+
+
+// Mostrar modal de confirmación para entregar pedido
+function mostrarModalConfirmarEntrega(idPedido, clienteInfo) {
+    // Crear modal si no existe
+    if ($('#modalConfirmarEntrega').length === 0) {
+        const modalHtml = `
+            <div class="modal fade" id="modalConfirmarEntrega" tabindex="-1" role="dialog">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirmar Entrega</h5>
+                            <button type="button" class="close" data-dismiss="modal">
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <p>¿Estás seguro de marcar este pedido como <strong>Entregado</strong>?</p>
+                            <p class="text-muted" id="modalInfoPedido"></p>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> 
+                                Se registrará la hora de entrega automáticamente.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-success" id="btnConfirmarEntrega">
+                                <i class="fas fa-check-circle"></i> Sí, Entregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('body').append(modalHtml);
+    }
+    
+    $('#modalInfoPedido').text(`Pedido #${idPedido} - ${clienteInfo}`);
+    $('#modalConfirmarEntrega').data('pedido-id', idPedido);
+    $('#modalConfirmarEntrega').modal('show');
+}
+
+// Evento para confirmar entrega
+$(document).on('click', '#btnConfirmarEntrega', function() {
+    const idPedido = $('#modalConfirmarEntrega').data('pedido-id');
+    
+    $.ajax({
+        url: `/api/pedidos/${idPedido}/entregar`,
+        method: 'PUT',
+        success: function(response) {
+            $('#modalConfirmarEntrega').modal('hide');
+            mostrarAlerta(`✅ Pedido #${idPedido} marcado como entregado a las ${new Date(response.fecha_entrega).toLocaleTimeString()}`, 'success');
+            cargarPedidosReales(); // Recargar la tabla
+        },
+        error: function(error) {
+            console.error('Error al entregar pedido:', error);
+            mostrarAlerta('Error al marcar pedido como entregado', 'danger');
+            $('#modalConfirmarEntrega').modal('hide');
+        }
+    });
+});
+
+
+
  //eventos del detalle
     
     function configurarEventosDetalle() {
