@@ -206,16 +206,6 @@ $('.btn-entregar').off('click').on('click', function() {
     mostrarModalConfirmarEntrega(idPedido, clienteInfo);
 });
 
-// Evento para botón cobrar
-$('.btn-cobrar').off('click').on('click', function() {
-    const idPedido = $(this).data('id');
-    const total = $(this).data('total');
-
-    console.log("Cobrar pedido:", idPedido, "Total:", total);
-
-    // Aquí luego abrimos el modal de pago
-});
-
 // Evento para botones de detalle (modificar)
 $('.btn-detalle').off('click').on('click', function() {
     const idPedido = $(this).data('id');
