@@ -111,6 +111,8 @@ pedidos.forEach(p => {
     if (p.estado === 'En Cocina') enCocina++;
     if (p.estado === 'Listo') listos++;
     if (p.estado === 'Entregado') entregados++;
+
+    
     
     const estadoClass = {
         'Pendiente': 'secondary',
@@ -147,13 +149,16 @@ pedidos.forEach(p => {
                 <i class="fas fa-check-circle"></i> Entregar
             </button>
         `;
-    } else if (p.estado === 'Entregado' && p.hora_entrega) {
-        // Mostrar hora de entrega
-        botonesAccion = `
-            <span class="badge badge-info">
-                <i class="fas fa-clock"></i> ${p.hora_entrega}
-            </span>
-        `;
+        // Botón de cobrar para pedidos entregados
+    } else if (p.estado === 'Entregado') {
+    botonesAccion = `
+        <button class="btn btn-sm btn-success btn-cobrar" 
+                data-id="${p.id_pedido}"
+                data-total="${p.total}"
+                title="Generar factura y cobrar">
+            <i class="fas fa-file-invoice-dollar"></i> Cobrar
+        </button>
+    `;
     } else {
         // Botón de modificar para otros estados
         botonesAccion = `
@@ -201,6 +206,16 @@ $('.btn-entregar').off('click').on('click', function() {
     mostrarModalConfirmarEntrega(idPedido, clienteInfo);
 });
 
+// Evento para botón cobrar
+$('.btn-cobrar').off('click').on('click', function() {
+    const idPedido = $(this).data('id');
+    const total = $(this).data('total');
+
+    console.log("Cobrar pedido:", idPedido, "Total:", total);
+
+    // Aquí luego abrimos el modal de pago
+});
+
 // Evento para botones de detalle (modificar)
 $('.btn-detalle').off('click').on('click', function() {
     const idPedido = $(this).data('id');
@@ -217,6 +232,19 @@ $('.btn-detalle').off('click').on('click', function() {
             }
         });
     }
+
+    // Evento para botón cobrar
+$('.btn-cobrar').off('click').on('click', function() {
+    const idPedido = $(this).data('id');
+    const total = parseFloat($(this).data('total'));
+
+    $('#modalCobro').data('pedido-id', idPedido);
+    $('#totalCobro').text(total.toFixed(2));
+    $('#montoRecibido').val('');
+    $('#vueltoInfo').text('');
+
+    $('#modalCobro').modal('show');
+});
     
    //detalle de pedido con las modificaciones
     
@@ -531,6 +559,48 @@ $(document).on('click', '#btnConfirmarEntrega', function() {
         mostrarAlerta('Para guardar cambios, haz clic en el botón "Guardar" de cada producto individualmente', 'info');
     });
     
+    // Calcular vuelto automático
+$('#montoRecibido').on('input', function () {
+    const total = parseFloat($('#totalCobro').text());
+    const recibido = parseFloat($(this).val());
+
+    if (!isNaN(recibido) && recibido >= total) {
+        const vuelto = recibido - total;
+        $('#vueltoInfo').text("Vuelto: ₡" + vuelto.toFixed(2));
+    } else {
+        $('#vueltoInfo').text("Monto insuficiente");
+    }
+});
+$('#btnConfirmarCobro').click(function () {
+
+    const idPedido = $('#modalCobro').data('pedido-id');
+    const metodoPago = $('#metodoPago').val();
+
+    $.ajax({
+        url: '/api/facturas',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            id_pedido: idPedido,
+            metodo_pago: metodoPago
+        }),
+        success: function (response) {
+
+            $('#modalCobro').modal('hide');
+
+            mostrarAlerta(`Factura ${response.numero_factura} generada correctamente`, 'success');
+
+            // Abrir PDF automáticamente
+            window.open(`/api/facturas/pdf/${response.id_factura}`, '_blank');
+
+            cargarPedidosReales();
+        },
+        error: function (error) {
+            console.error(error);
+            mostrarAlerta("Error al generar factura", "danger");
+        }
+    });
+});
     // cargar los pedidos al iniciar
     cargarPedidosReales();
     
