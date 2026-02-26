@@ -262,7 +262,43 @@
 
                     <!-- Tarjetas de Resumen -->
                     <div class="row mb-4">
-                        <!-- Pendientes - 25% -->
+
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-primary shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                                Pedidos Hoy</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="pedidosHoy">0</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="col-xl-3 col-md-6 mb-4">
+                            <div class="card border-left-success shadow h-100 py-2">
+                                <div class="card-body">
+                                    <div class="row no-gutters align-items-center">
+                                        <div class="col mr-2">
+                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                                En Cocina</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="enCocina">0</div>
+                                        </div>
+                                        <div class="col-auto">
+                                            <i class="fas fa-fire fa-2x text-gray-300"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
                         <div class="col-xl-3 col-md-6 mb-4">
                             <div class="card border-left-warning shadow h-100 py-2">
                                 <div class="card-body">
@@ -280,54 +316,18 @@
                             </div>
                         </div>
 
-                        <!-- En Cocina - 25% -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-danger shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                                En Cocina</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="enCocina">0</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-fire fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Listos para Entregar - 25% -->
-                        <div class="col-xl-3 col-md-6 mb-4">
-                            <div class="card border-left-success shadow h-100 py-2">
-                                <div class="card-body">
-                                    <div class="row no-gutters align-items-center">
-                                        <div class="col mr-2">
-                                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                                Listos para Entregar</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="listos">0</div>
-                                        </div>
-                                        <div class="col-auto">
-                                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Entregados Hoy - 25% -->
                         <div class="col-xl-3 col-md-6 mb-4">
                             <div class="card border-left-info shadow h-100 py-2">
                                 <div class="card-body">
                                     <div class="row no-gutters align-items-center">
                                         <div class="col mr-2">
                                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                                Entregados Hoy</div>
-                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="entregados">0</div>
+                                                Listos</div>
+                                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="listos">0</div>
                                         </div>
                                         <div class="col-auto">
-                                            <i class="fas fa-check-double fa-2x text-gray-300"></i>
+                                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -523,51 +523,6 @@
             </div>
         </div>
     </div>
-
-    <!-- MODAL COBRO -->
-<div class="modal fade" id="modalCobro" tabindex="-1">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      
-      <div class="modal-header">
-        <h5 class="modal-title">Generar Factura</h5>
-        <button type="button" class="close" data-dismiss="modal">
-          <span>&times;</span>
-        </button>
-      </div>
-
-      <div class="modal-body">
-
-        <p><strong>Total a pagar:</strong> ₡<span id="totalCobro"></span></p>
-
-        <div class="form-group">
-          <label>Método de Pago</label>
-          <select class="form-control" id="metodoPago">
-            <option value="Efectivo">Efectivo</option>
-            <option value="Tarjeta">Tarjeta</option>
-            <option value="Transferencia">Transferencia</option>
-          </select>
-        </div>
-
-        <div class="form-group" id="grupoEfectivo">
-          <label>Monto recibido</label>
-          <input type="number" class="form-control" id="montoRecibido">
-        </div>
-
-        <p id="vueltoInfo" class="text-success font-weight-bold"></p>
-
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-        <button class="btn btn-primary" id="btnConfirmarCobro">
-          Confirmar Pago
-        </button>
-      </div>
-
-    </div>
-  </div>
-</div>
 
     <!-- Scroll to Top Button-->
     <a class="scroll-to-top rounded" href="#page-top">
