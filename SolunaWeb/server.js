@@ -742,6 +742,317 @@ app.put('/api/pedidos/:id/estado', async (req, res) => {
     }
 });
 
+
+// Marcar pedido como entregado (con hora de entrega)
+app.put('/api/pedidos/:id/entregar', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await getConnection();
+
+        // Actualizar estado a 'Entregado' y registrar fecha_entrega
+        await pool.request()
+            .input('id', sql.Int, id)
+            .input('fecha_entrega', sql.DateTime, new Date(new Date().getTime() - (6 * 60 * 60 * 1000)))
+            .query(`
+                UPDATE Pedidos 
+                SET estado = 'Entregado', 
+                    fecha_entrega = @fecha_entrega 
+                WHERE id_pedido = @id
+            `);
+
+        // Si el pedido tenía mesa, liberarla
+        await pool.request()
+            .input('id', sql.Int, id)
+            .query(`
+                UPDATE Mesas 
+                SET estado = 'Libre' 
+                WHERE id_mesa = (SELECT id_mesa FROM Pedidos WHERE id_pedido = @id)
+            `);
+
+        res.json({
+            success: true,
+            message: 'Pedido marcado como entregado',
+            fecha_entrega: new Date()
+        });
+    } catch (err) {
+        console.error('Error al marcar como entregado:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Obtener productos de un pedido para división
+app.get('/api/pedidos/:id/productos-para-dividir', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await getConnection();
+
+        const result = await pool.request()
+            .input('id_pedido', sql.Int, id)
+            .query(`
+                SELECT 
+                    d.id_detalle,
+                    p.nombre_producto,
+                    d.cantidad,
+                    d.precio_unitario,
+                    d.notas
+                FROM Detalle_Pedidos d
+                INNER JOIN Productos p ON d.id_producto = p.id_producto
+                WHERE d.id_pedido = @id_pedido
+                ORDER BY p.nombre_producto
+            `);
+
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Crear división de cuenta
+app.post('/api/pedidos/:id/dividir', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { tipo, personas, asignaciones } = req.body;
+
+        console.log(' Dividiendo pedido:', { id, tipo, personas, asignaciones });
+
+        const pool = await getConnection();
+
+        // Obtener usuario de la sesión (por ahora fijo)
+        const idUsuario = 4; // Cambiar cuando tengas sesión
+
+        // Verificar que el pedido existe
+        const pedidoCheck = await pool.request()
+            .input('id_pedido', sql.Int, id)
+            .query('SELECT total FROM Pedidos WHERE id_pedido = @id_pedido');
+
+        if (pedidoCheck.recordset.length === 0) {
+            return res.status(404).json({ error: 'Pedido no encontrado' });
+        }
+
+        const total = pedidoCheck.recordset[0].total;
+        console.log(' Total del pedido:', total);
+
+        // 1. Crear la división
+        const divisionResult = await pool.request()
+            .input('id_pedido', sql.Int, id)
+            .input('id_usuario', sql.Int, idUsuario)
+            .input('tipo', sql.NVarChar, tipo)
+            .input('personas', sql.Int, personas)
+            .query(`
+                INSERT INTO Divisiones_Cuenta (id_pedido, id_usuario, tipo_division, numero_personas)
+                OUTPUT INSERTED.id_division
+                VALUES (@id_pedido, @id_usuario, @tipo, @personas)
+            `);
+
+        const idDivision = divisionResult.recordset[0].id_division;
+        console.log(' División creada con ID:', idDivision);
+
+        // 2. PROCESAR SEGÚN EL TIPO DE DIVISIÓN
+        if (tipo === 'Igual') {
+            // DIVISIÓN EN PARTES IGUALES
+            const porPersona = total / personas;
+            const subtotalPorPersona = Number((porPersona / 1.13).toFixed(2));
+            const impuestoPorPersona = Number((porPersona - subtotalPorPersona).toFixed(2));
+
+            // Crear tickets (todos iguales)
+            for (let i = 1; i <= personas; i++) {
+                await pool.request()
+                    .input('id_division', sql.Int, idDivision)
+                    .input('persona', sql.Int, i)
+                    .input('subtotal', sql.Decimal(10, 2), subtotalPorPersona)
+                    .input('impuesto', sql.Decimal(10, 2), impuestoPorPersona)
+                    .input('total', sql.Decimal(10, 2), porPersona)
+                    .query(`
+                        INSERT INTO Tickets_Divididos (id_division, persona_numero, subtotal, impuesto, total)
+                        VALUES (@id_division, @persona, @subtotal, @impuesto, @total)
+                    `);
+            }
+            console.log(` Creados ${personas} tickets iguales`);
+
+        } else if (tipo === 'PorProductos') {
+            // DIVISIÓN POR PRODUCTOS
+            console.log(' Procesando división por productos');
+
+            // Array para guardar total por persona
+            let totalesPorPersona = new Array(personas).fill(0);
+
+            // Procesar cada asignación
+            for (const asig of asignaciones) {
+                // Obtener precio unitario del producto
+                const precioResult = await pool.request()
+                    .input('id_detalle', sql.Int, asig.id_detalle)
+                    .query('SELECT precio_unitario FROM Detalle_Pedidos WHERE id_detalle = @id_detalle');
+
+                const precioUnitario = precioResult.recordset[0].precio_unitario;
+
+                // Calcular monto
+                const monto = precioUnitario * asig.cantidad;
+
+                // Asumimos que la persona es la 1 por ahora (mejorar después)
+                const persona = 1;
+                totalesPorPersona[persona - 1] += monto;
+
+                // Guardar en Detalle_Division
+                await pool.request()
+                    .input('id_division', sql.Int, idDivision)
+                    .input('persona', sql.Int, persona)
+                    .input('id_detalle', sql.Int, asig.id_detalle)
+                    .input('cantidad', sql.Int, asig.cantidad)
+                    .input('monto', sql.Decimal(10, 2), monto)
+                    .query(`
+                        INSERT INTO Detalle_Division (id_division, persona_numero, id_detalle_pedido, cantidad_asignada, monto_asignado)
+                        VALUES (@id_division, @persona, @id_detalle, @cantidad, @monto)
+                    `);
+            }
+
+            // Crear tickets basados en los totales calculados
+            for (let i = 1; i <= personas; i++) {
+                const totalPersona = totalesPorPersona[i - 1];
+                if (totalPersona > 0) {
+                    const subtotalPersona = Number((totalPersona / 1.13).toFixed(2));
+                    const impuestoPersona = Number((totalPersona - subtotalPersona).toFixed(2));
+
+                    await pool.request()
+                        .input('id_division', sql.Int, idDivision)
+                        .input('persona', sql.Int, i)
+                        .input('subtotal', sql.Decimal(10, 2), subtotalPersona)
+                        .input('impuesto', sql.Decimal(10, 2), impuestoPersona)
+                        .input('total', sql.Decimal(10, 2), totalPersona)
+                        .query(`
+                            INSERT INTO Tickets_Divididos (id_division, persona_numero, subtotal, impuesto, total)
+                            VALUES (@id_division, @persona, @subtotal, @impuesto, @total)
+                        `);
+                }
+            }
+            console.log(` Creados tickets por productos`);
+        }
+
+        res.json({
+            success: true,
+            message: 'Cuenta dividida correctamente',
+            id_division: idDivision,
+            tickets: personas
+        });
+
+    } catch (err) {
+        console.error(' Error al dividir cuenta:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Obtener tickets de una división
+app.get('/api/divisiones/:id/tickets', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await getConnection();
+
+        const result = await pool.request()
+            .input('id_division', sql.Int, id)
+            .query(`
+                SELECT * FROM Tickets_Divididos 
+                WHERE id_division = @id_division
+                ORDER BY persona_numero
+            `);
+
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Generar factura para un ticket (VERSIÓN CON DEBUG)
+app.post('/api/facturas/ticket', async (req, res) => {
+    try {
+        const { id_ticket, metodo_pago } = req.body;
+        console.log(' Procesando pago de ticket:', { id_ticket, metodo_pago });
+
+        const pool = await getConnection();
+
+        // 1. Verificar que el ticket existe
+        const ticketResult = await pool.request()
+            .input('id_ticket', sql.Int, id_ticket)
+            .query(`
+                SELECT td.*, dc.id_pedido, dc.numero_personas
+                FROM Tickets_Divididos td
+                INNER JOIN Divisiones_Cuenta dc ON td.id_division = dc.id_division
+                WHERE td.id_ticket = @id_ticket
+            `);
+
+        console.log(' Resultado ticket:', ticketResult.recordset);
+
+        if (ticketResult.recordset.length === 0) {
+            return res.status(404).json({ error: 'Ticket no encontrado' });
+        }
+
+        const ticket = ticketResult.recordset[0];
+
+        // 2. Verificar sesión de caja activa
+        const cajaResult = await pool.request()
+            .query("SELECT TOP 1 id_sesion FROM Cajas_Sesiones WHERE estado = 'Abierta'");
+
+        console.log(' Caja activa:', cajaResult.recordset);
+
+        if (cajaResult.recordset.length === 0) {
+            return res.status(400).json({ error: 'No hay caja abierta. Abra una caja primero.' });
+        }
+
+        const idSesion = cajaResult.recordset[0].id_sesion;
+
+        // 3. Crear factura
+        console.log(' Creando factura...');
+        const facturaResult = await pool.request()
+            .input('id_pedido', sql.Int, ticket.id_pedido)
+            .input('id_sesion', sql.Int, idSesion)
+            .input('metodo_pago', sql.NVarChar, metodo_pago)
+            .input('subtotal', sql.Decimal(10, 2), ticket.subtotal)
+            .input('impuesto', sql.Decimal(10, 2), ticket.impuesto)
+            .input('total', sql.Decimal(10, 2), ticket.total)
+            .query(`
+                INSERT INTO Facturas (id_pedido, id_sesion_caja, metodo_pago, subtotal, impuesto, total_pagar)
+                OUTPUT INSERTED.id_factura
+                VALUES (@id_pedido, @id_sesion, @metodo_pago, @subtotal, @impuesto, @total)
+            `);
+
+        const idFactura = facturaResult.recordset[0].id_factura;
+        console.log(' Factura creada ID:', idFactura);
+
+        // 4. Marcar ticket como pagado
+        await pool.request()
+            .input('id_ticket', sql.Int, id_ticket)
+            .input('id_factura', sql.Int, idFactura)
+            .query('UPDATE Tickets_Divididos SET pagado = 1, id_factura = @id_factura WHERE id_ticket = @id_ticket');
+
+        // 5. Verificar si todos los tickets están pagados
+        const ticketsPendientes = await pool.request()
+            .input('id_division', sql.Int, ticket.id_division)
+            .query('SELECT COUNT(*) as pendientes FROM Tickets_Divididos WHERE id_division = @id_division AND pagado = 0');
+
+        console.log(' Tickets pendientes en división:', ticketsPendientes.recordset[0].pendientes);
+
+        if (ticketsPendientes.recordset[0].pendientes === 0) {
+            await pool.request()
+                .input('id_pedido', sql.Int, ticket.id_pedido)
+                .query("UPDATE Pedidos SET estado = 'Pagado' WHERE id_pedido = @id_pedido");
+            console.log(' Pedido marcado como pagado');
+        }
+
+        res.json({
+            success: true,
+            message: 'Ticket pagado correctamente',
+            id_factura: idFactura
+        });
+
+    } catch (err) {
+        console.error(' ERROR DETALLADO:', err);
+        res.status(500).json({
+            error: err.message,
+            details: err.toString(),
+            stack: err.stack
+        });
+    }
+});
+
+
 // --- API ENDPOINTS PARA MESAS ---
 app.get('/api/mesas', async (req, res) => {
     try {
@@ -916,7 +1227,6 @@ const verificarAutenticacion = (req, res, next) => {
     console.log('Acceso a ruta protegida:', req.path);
     next();
 };
-
 
 // Login de usuarios
 app.post('/api/login', async (req, res) => {
