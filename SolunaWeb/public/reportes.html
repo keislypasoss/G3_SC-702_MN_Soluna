@@ -19,6 +19,30 @@
 
     <!-- Custom styles for this template -->
     <link href="css/sb-admin-2.min.css" rel="stylesheet">
+    
+    <style>
+        /* Estilos específicos para la impresión del ticket de cierre */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #ticketCierreModal .modal-body, #ticketCierreModal .modal-body * {
+                visibility: visible;
+            }
+            #ticketCierreModal .modal-body {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            /* Ocultar scrollbars, tooltips u otros elementos no deseados */
+            #ticketCierreModal .modal-footer,
+            #ticketCierreModal .modal-header .close,
+            .modal-backdrop {
+                display: none !important;
+            }
+        }
+    </style>
 
 </head>
 
@@ -251,6 +275,7 @@
                                 <option value="productos">Productos</option>
                                 <option value="usuarios">Usuarios</option>
                                 <option value="inventario">Inventario</option>
+                                <option value="cierres">Cierres de Caja</option>
                             </select>
                         </div>
                         <div class="col-lg-3 col-md-6 mb-2">
@@ -432,6 +457,37 @@
                             </div>
                         </div>
 
+                        <!-- Cierres de Caja (Oculto por defecto) -->
+                        <div class="col-lg-12 mb-4" id="contenedorCierres" style="display: none;">
+                            <div class="card shadow mb-4">
+                                <div class="card-header py-3">
+                                    <h6 class="m-0 font-weight-bold text-primary">Historial de Cierres de Caja</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>ID Sesión</th>
+                                                    <th>Cajero</th>
+                                                    <th>Fecha Apertura</th>
+                                                    <th>Fecha Cierre</th>
+                                                    <th>Monto Inicial</th>
+                                                    <th>Total Ventas</th>
+                                                    <th>Monto Final</th>
+                                                    <th>Facturas</th>
+                                                    <th>Acciones</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="tablaCierres">
+                                                <!-- Se llena dinámicamente -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
                     <!-- Content Row - Rendimiento por Hora -->
@@ -445,6 +501,31 @@
                                     <div class="chart-bar">
                                         <canvas id="chartVentasHora"></canvas>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Reimpresión de Cierre -->
+                    <div class="modal fade" id="ticketCierreModal" tabindex="-1" role="dialog" aria-labelledby="ticketCierreLabel" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="ticketCierreLabel">Reimprimir Cierre</h5>
+                                    <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">×</span>
+                                    </button>
+                                </div>
+                                <div class="modal-body">
+                                    <div id="ticketCierreContent" class="ticket-print" style="font-family: monospace; max-width: 300px; margin: 0 auto; text-align: center;">
+                                        <!-- Contenido del ticket inyectado desde JS -->
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button class="btn btn-secondary" type="button" data-dismiss="modal">Cerrar</button>
+                                    <button class="btn btn-primary" type="button" onclick="imprimirTicketCierre()">
+                                        <i class="fas fa-print"></i> Imprimir
+                                    </button>
                                 </div>
                             </div>
                         </div>

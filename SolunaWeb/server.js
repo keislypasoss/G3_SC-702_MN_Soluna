@@ -1165,6 +1165,49 @@ app.post('/api/caja/cerrar', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// Obtener historial de cierres de caja (con filtro opcional por fecha)
+app.get('/api/caja/cierres', async (req, res) => {
+    try {
+        const { fechaInicio, fechaFin } = req.query;
+        let queryStr = `
+            SELECT 
+                cs.id_sesion,
+                u.nombre_completo as nombre_usuario,
+                cs.fecha_apertura,
+                cs.fecha_cierre,
+                cs.monto_inicial,
+                cs.monto_final,
+                cs.total_ventas_sistema,
+                (SELECT COUNT(*) FROM Facturas f WHERE f.id_sesion_caja = cs.id_sesion) as cantidad_facturas
+            FROM Cajas_Sesiones cs
+            LEFT JOIN Usuarios u ON cs.id_usuario = u.id_usuario
+            WHERE cs.estado = 'Cerrada' AND cs.fecha_cierre IS NOT NULL
+        `;
+
+        // Filtro por fechas si es que vienen en la query
+        if (fechaInicio && fechaFin) {
+            queryStr += ` AND CAST(cs.fecha_cierre AS DATE) >= CAST(@fechaInicio AS DATE) 
+                          AND CAST(cs.fecha_cierre AS DATE) <= CAST(@fechaFin AS DATE)`;
+        }
+
+        queryStr += ` ORDER BY cs.fecha_cierre DESC`;
+
+        const pool = await getConnection();
+        const request = pool.request();
+        
+        if (fechaInicio && fechaFin) {
+            request.input('fechaInicio', sql.Date, fechaInicio)
+                   .input('fechaFin', sql.Date, fechaFin);
+        }
+
+        const result = await request.query(queryStr);
+        res.json(result.recordset);
+
+    } catch (err) { 
+        res.status(500).json({ error: err.message }); 
+    }
+});
+
 // Crear Factura (Pago)
 app.post('/api/facturas', async (req, res) => {
     try {
