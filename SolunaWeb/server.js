@@ -1243,6 +1243,112 @@ app.post('/api/facturas', async (req, res) => {
     }
 });
 
+// --- API ENDPOINTS PARA INVENTARIO / INSUMOS ---
+app.get('/api/insumos', async (req, res) => {
+    try {
+        const pool = await getConnection();
+        const result = await pool.request().query(`
+            SELECT 
+                i.id_insumo, 
+                i.nombre_insumo, 
+                i.stock_actual, 
+                i.unidad_medida, 
+                i.stock_minimo, 
+                i.costo_unitario,
+                i.categoria,
+                p.nombre_empresa as nombre_proveedor
+            FROM Insumos i
+            LEFT JOIN Proveedores p ON i.id_proveedor = p.id_proveedor
+            ORDER BY i.nombre_insumo
+        `);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/inventario/ajuste', async (req, res) => {
+    try {
+        const { id_insumo, tipo_ajuste, cantidad, nuevo_stock, motivo, id_usuario } = req.body;
+        
+        if (!id_insumo || !tipo_ajuste || cantidad === undefined || !id_usuario) {
+            return res.status(400).json({ error: 'Faltan parámetros obligatorios' });
+        }
+
+        const pool = await getConnection();
+        
+        // 1. Obtener stock actual
+        const insumoResult = await pool.request()
+            .input('id_insumo', sql.Int, id_insumo)
+            .query('SELECT stock_actual FROM Insumos WHERE id_insumo = @id_insumo');
+        
+        if (insumoResult.recordset.length === 0) {
+            return res.status(404).json({ error: 'Insumo no encontrado' });
+        }
+        
+        const stockActual = parseFloat(insumoResult.recordset[0].stock_actual) || 0;
+        let stockNuevo = stockActual;
+        const cantFloat = parseFloat(cantidad);
+
+        // 2. Calcular nuevo stock
+        if (tipo_ajuste === 'entrada') {
+            stockNuevo = stockActual + cantFloat;
+        } else if (tipo_ajuste === 'salida') {
+            stockNuevo = stockActual - cantFloat;
+            if (stockNuevo < 0) stockNuevo = 0;
+        } else if (tipo_ajuste === 'ajuste') {
+            // Un ajuste establece explícitamente el stock (por ejemplo: inventario físico inicial)
+            stockNuevo = parseFloat(nuevo_stock);
+        } else {
+            return res.status(400).json({ error: 'Tipo de ajuste no válido' });
+        }
+
+        // 3. Actualizar el Insumo
+        await pool.request()
+            .input('id_insumo', sql.Int, id_insumo)
+            .input('stock_nuevo', sql.Decimal(10,2), stockNuevo)
+            .query('UPDATE Insumos SET stock_actual = @stock_nuevo WHERE id_insumo = @id_insumo');
+
+        // 4. Registrar en el Historial
+        await pool.request()
+            .input('id_insumo', sql.Int, id_insumo)
+            .input('cantidad_anterior', sql.Decimal(10,2), stockActual)
+            .input('cantidad_nueva', sql.Decimal(10,2), stockNuevo)
+            .input('tipo_movimiento', sql.NVarChar, tipo_ajuste === 'ajuste' ? 'Ajuste Manual' : (tipo_ajuste === 'entrada' ? 'Entrada' : 'Salida'))
+            .input('motivo', sql.NVarChar, motivo || '')
+            .input('id_usuario', sql.Int, id_usuario)
+            .query(`
+                INSERT INTO Inventario_Historial (id_insumo, cantidad_anterior, cantidad_nueva, tipo_movimiento, motivo, id_usuario)
+                VALUES (@id_insumo, @cantidad_anterior, @cantidad_nueva, @tipo_movimiento, @motivo, @id_usuario)
+            `);
+
+        res.json({ success: true, message: 'Stock actualizado correctamente', stock_nuevo: stockNuevo });
+
+    } catch (err) {
+        console.error('Error en ajuste de inventario:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/inventario/historial/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const pool = await getConnection();
+        const result = await pool.request()
+            .input('id_insumo', sql.Int, id)
+            .query(`
+                SELECT h.*, u.nombre_completo as nombre_usuario
+                FROM Inventario_Historial h
+                LEFT JOIN Usuarios u ON h.id_usuario = u.id_usuario
+                WHERE h.id_insumo = @id_insumo
+                ORDER BY h.fecha_movimiento DESC
+            `);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // Estadísticas de pedidos
 app.get('/api/pedidos/estadisticas/hoy', async (req, res) => {
     try {
@@ -1418,6 +1524,26 @@ app.listen(PORT, async () => {
                 )
             `);
             console.log(' Tabla Caja_Sesiones creada');
+        }
+
+        try {
+            await pool.request().query("SELECT 1 FROM Inventario_Historial");
+        } catch {
+            await pool.request().query(`
+                CREATE TABLE Inventario_Historial (
+                    id_movimiento INT IDENTITY(1,1) PRIMARY KEY,
+                    id_insumo INT NOT NULL,
+                    cantidad_anterior DECIMAL(10,2) NOT NULL,
+                    cantidad_nueva DECIMAL(10,2) NOT NULL,
+                    tipo_movimiento NVARCHAR(50) NOT NULL,
+                    motivo NVARCHAR(255) NULL,
+                    fecha_movimiento DATETIME DEFAULT GETDATE(),
+                    id_usuario INT NOT NULL,
+                    FOREIGN KEY (id_insumo) REFERENCES Insumos(id_insumo),
+                    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario)
+                )
+            `);
+            console.log(' Tabla Inventario_Historial creada');
         }
 
     } catch (err) {
