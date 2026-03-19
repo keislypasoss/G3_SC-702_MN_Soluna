@@ -811,14 +811,18 @@ app.get('/api/pedidos/:id/productos-para-dividir', async (req, res) => {
 app.post('/api/pedidos/:id/dividir', async (req, res) => {
     try {
         const { id } = req.params;
-        const { tipo, personas, asignaciones } = req.body;
+        const { tipo, personas, asignaciones, id_usuario } = req.body;
 
-        console.log(' Dividiendo pedido:', { id, tipo, personas, asignaciones });
+        console.log(' Dividiendo pedido:', { id, tipo, personas, asignaciones, id_usuario });
+
+        if (!id_usuario) {
+            return res.status(400).json({ error: 'Se requiere id_usuario para dividir la cuenta.' });
+        }
 
         const pool = await getConnection();
 
-        // Obtener usuario de la sesión (por ahora fijo)
-        const idUsuario = 4; // Cambiar cuando tengas sesión
+        // Obtener usuario de la sesión (enviado desde el frontend via sessionStorage)
+        const idUsuario = id_usuario;
 
         // Verificar que el pedido existe
         const pedidoCheck = await pool.request()
@@ -1194,17 +1198,17 @@ app.get('/api/caja/cierres', async (req, res) => {
 
         const pool = await getConnection();
         const request = pool.request();
-        
+
         if (fechaInicio && fechaFin) {
             request.input('fechaInicio', sql.Date, fechaInicio)
-                   .input('fechaFin', sql.Date, fechaFin);
+                .input('fechaFin', sql.Date, fechaFin);
         }
 
         const result = await request.query(queryStr);
         res.json(result.recordset);
 
-    } catch (err) { 
-        res.status(500).json({ error: err.message }); 
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
@@ -1270,22 +1274,22 @@ app.get('/api/insumos', async (req, res) => {
 app.post('/api/inventario/ajuste', async (req, res) => {
     try {
         const { id_insumo, tipo_ajuste, cantidad, nuevo_stock, motivo, id_usuario } = req.body;
-        
+
         if (!id_insumo || !tipo_ajuste || cantidad === undefined || !id_usuario) {
             return res.status(400).json({ error: 'Faltan parámetros obligatorios' });
         }
 
         const pool = await getConnection();
-        
+
         // 1. Obtener stock actual
         const insumoResult = await pool.request()
             .input('id_insumo', sql.Int, id_insumo)
             .query('SELECT stock_actual FROM Insumos WHERE id_insumo = @id_insumo');
-        
+
         if (insumoResult.recordset.length === 0) {
             return res.status(404).json({ error: 'Insumo no encontrado' });
         }
-        
+
         const stockActual = parseFloat(insumoResult.recordset[0].stock_actual) || 0;
         let stockNuevo = stockActual;
         const cantFloat = parseFloat(cantidad);
@@ -1306,14 +1310,14 @@ app.post('/api/inventario/ajuste', async (req, res) => {
         // 3. Actualizar el Insumo
         await pool.request()
             .input('id_insumo', sql.Int, id_insumo)
-            .input('stock_nuevo', sql.Decimal(10,2), stockNuevo)
+            .input('stock_nuevo', sql.Decimal(10, 2), stockNuevo)
             .query('UPDATE Insumos SET stock_actual = @stock_nuevo WHERE id_insumo = @id_insumo');
 
         // 4. Registrar en el Historial
         await pool.request()
             .input('id_insumo', sql.Int, id_insumo)
-            .input('cantidad_anterior', sql.Decimal(10,2), stockActual)
-            .input('cantidad_nueva', sql.Decimal(10,2), stockNuevo)
+            .input('cantidad_anterior', sql.Decimal(10, 2), stockActual)
+            .input('cantidad_nueva', sql.Decimal(10, 2), stockNuevo)
             .input('tipo_movimiento', sql.NVarChar, tipo_ajuste === 'ajuste' ? 'Ajuste Manual' : (tipo_ajuste === 'entrada' ? 'Entrada' : 'Salida'))
             .input('motivo', sql.NVarChar, motivo || '')
             .input('id_usuario', sql.Int, id_usuario)

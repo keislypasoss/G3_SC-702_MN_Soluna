@@ -538,6 +538,14 @@ $(document).ready(function () {
             });
         }
         
+        const usuarioSession = JSON.parse(sessionStorage.getItem('usuario'));
+        const idUsuario = usuarioSession ? (usuarioSession.id || usuarioSession.id_usuario) : null;
+
+        if (!idUsuario) {
+            mostrarAlerta('No se pudo obtener el usuario de sesión. Por favor, vuelve a iniciar sesión.', 'danger');
+            return;
+        }
+
         $.ajax({
             url: `/api/pedidos/${idPedido}/dividir`,
             method: 'POST',
@@ -545,7 +553,8 @@ $(document).ready(function () {
             data: JSON.stringify({
                 tipo: tipo,
                 personas: personas,
-                asignaciones: asignaciones
+                asignaciones: asignaciones,
+                id_usuario: idUsuario
             }),
             success: function(response) {
                 $('#modalDividirCuenta').modal('hide');
