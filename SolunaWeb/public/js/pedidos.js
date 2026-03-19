@@ -605,12 +605,15 @@ $(document).ready(function () {
     
     $(document).on('click', '.btn-cobrar-ticket', function() {
         const ticketId = $(this).data('ticket-id');
-        const total = $(this).data('total');
+        const total = parseFloat($(this).data('total'));
         
         $('#modalCobroTicket').data('ticket-id', ticketId);
         $('#totalTicket').text(total.toFixed(2));
         $('#montoRecibidoTicket').val('');
         $('#vueltoTicketInfo').text('');
+        
+        // Guardamos referencia al botón para deshabilitarlo al pagar
+        $('#modalCobroTicket').data('btn-origen', $(this));
         
         $('#modalCobroTicket').modal('show');
     });
@@ -652,9 +655,26 @@ $(document).ready(function () {
             }),
             success: function(response) {
                 $('#modalCobroTicket').modal('hide');
-                $('#modalTickets').modal('hide');
-                mostrarAlerta(`✅ Ticket pagado - Factura generada`, 'success');
-                cargarPedidosReales();
+                mostrarAlerta(`✅ Ticket pagado - Factura #${response.id_factura} generada`, 'success');
+                
+                // Deshabilitar el botón del ticket ya pagado
+                const btnOrigen = $('#modalCobroTicket').data('btn-origen');
+                if (btnOrigen) {
+                    btnOrigen
+                        .text('✅ Pagado')
+                        .removeClass('btn-success')
+                        .addClass('btn-secondary')
+                        .prop('disabled', true);
+                }
+                
+                // Si todos los tickets están pagados, cerrar el modal y recargar
+                const ticketsPendientes = $('#modalTickets .btn-cobrar-ticket:not(:disabled)').length;
+                if (ticketsPendientes === 0) {
+                    setTimeout(function() {
+                        $('#modalTickets').modal('hide');
+                        cargarPedidosReales();
+                    }, 1200);
+                }
             },
             error: function(error) {
                 console.error('Error al cobrar ticket:', error);

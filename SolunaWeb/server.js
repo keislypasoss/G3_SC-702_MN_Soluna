@@ -1033,7 +1033,7 @@ app.post('/api/facturas/ticket', async (req, res) => {
 
         console.log(' Tickets pendientes en división:', ticketsPendientes.recordset[0].pendientes);
 
-        if (ticketsPendientes.recordset[0].pendientes === 0) {
+        if (parseInt(ticketsPendientes.recordset[0].pendientes) === 0) {
             await pool.request()
                 .input('id_pedido', sql.Int, ticket.id_pedido)
                 .query("UPDATE Pedidos SET estado = 'Pagado' WHERE id_pedido = @id_pedido");

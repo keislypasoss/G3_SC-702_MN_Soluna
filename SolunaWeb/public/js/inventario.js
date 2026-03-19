@@ -2,10 +2,10 @@
 
 let allInsumos = [];
 
-$(document).ready(function() {
+$(document).ready(function () {
     console.log("Inicializando inventario.js");
     cargarInventario();
-    
+
     // Configurar modal de ajuste (Bootstrap 4 usa jQuery para eventos)
     $('#ajusteStockModal').on('show.bs.modal', function () {
         $('#formAjusteStock')[0].reset();
@@ -13,7 +13,7 @@ $(document).ready(function() {
         $('#stockActualDisplay').val('');
     });
 
-    $('#selectProducto').on('change', function(e) {
+    $('#selectProducto').on('change', function (e) {
         const option = $(this).find('option:selected');
         if (option.val()) {
             const stock = option.attr('data-stock');
@@ -23,7 +23,7 @@ $(document).ready(function() {
         }
     });
 
-    $('#tipoAjuste').on('change', function(e) {
+    $('#tipoAjuste').on('change', function (e) {
         if ($(this).val() === 'ajuste') {
             $('#cantidadGroup').hide();
             $('#cantidadAjuste').removeAttr('required');
@@ -48,9 +48,9 @@ async function cargarInventario() {
     try {
         const response = await fetch('/api/insumos');
         if (!response.ok) throw new Error('Error de conexión con el servidor');
-        
+
         allInsumos = await response.json();
-        
+
         // Poblar el select del modal de ajuste
         const selectProducto = document.getElementById('selectProducto');
         selectProducto.innerHTML = '<option value="">Seleccione un producto</option>';
@@ -100,26 +100,20 @@ function renderizarTabla(insumos) {
     let totalProductos = insumos.length;
     let stockBajo = 0;
     let stockAgotado = 0;
-    let sumaValorTotal = 0;
 
     if (insumos.length === 0) {
         tbody.innerHTML = '<tr><td colspan="9" class="text-center">No hay insumos que coincidan con los filtros</td></tr>';
         document.getElementById('totalProductos').textContent = 0;
         document.getElementById('stockBajo').textContent = 0;
         document.getElementById('stockAgotado').textContent = 0;
-        document.getElementById('valorTotal').textContent = '₡0.00';
         return;
     }
 
     insumos.forEach(insumo => {
         const tr = document.createElement('tr');
-        
+
         const stockActual = parseFloat(insumo.stock_actual) || 0;
         const stockMinimo = parseFloat(insumo.stock_minimo) || 0;
-        const costoUnitario = parseFloat(insumo.costo_unitario) || 0;
-        const valorTotal = stockActual * costoUnitario;
-        
-        sumaValorTotal += valorTotal;
 
         let estadoHtml = '';
         if (stockActual === 0) {
@@ -133,15 +127,13 @@ function renderizarTabla(insumos) {
         }
 
         const catText = insumo.categoria || 'Ingrediente';
-        
+
         tr.innerHTML = `
             <td>${insumo.nombre_insumo}</td>
             <td>${catText}</td>
             <td class="text-right font-weight-bold">${stockActual.toLocaleString('es-CR')}</td>
             <td class="text-right">${stockMinimo.toLocaleString('es-CR')}</td>
             <td>${insumo.unidad_medida || 'U'}</td>
-            <td class="text-right">₡${costoUnitario.toLocaleString('es-CR', {minimumFractionDigits: 2})}</td>
-            <td class="text-right font-weight-bold">₡${valorTotal.toLocaleString('es-CR', {minimumFractionDigits: 2})}</td>
             <td class="text-center">${estadoHtml}</td>
             <td class="text-center">
                 <button class="btn btn-sm btn-info mb-1" onclick="abrirAjuste(${insumo.id_insumo})" title="Ajuste Rápido">
@@ -158,7 +150,6 @@ function renderizarTabla(insumos) {
     document.getElementById('totalProductos').textContent = totalProductos;
     document.getElementById('stockBajo').textContent = stockBajo;
     document.getElementById('stockAgotado').textContent = stockAgotado;
-    document.getElementById('valorTotal').textContent = '₡' + sumaValorTotal.toLocaleString('es-CR', {minimumFractionDigits: 2});
 }
 
 function abrirAjuste(id_insumo) {
@@ -177,9 +168,9 @@ async function guardarAjuste() {
     const cantidad = parseFloat(document.getElementById('cantidadAjuste').value);
     const nuevoStock = parseFloat(document.getElementById('nuevoStock').value);
     const motivo = document.getElementById('motivoAjuste').value;
-    
+
     // Obtenemos el usuario de la sesión actual (sessionStorage)
-    let id_usuario = null; 
+    let id_usuario = null;
     let usuarioStr = sessionStorage.getItem('usuario');
     if (!usuarioStr) usuarioStr = localStorage.getItem('user'); // fallback por si acaso
 
@@ -187,7 +178,7 @@ async function guardarAjuste() {
         try {
             const parsed = JSON.parse(usuarioStr);
             id_usuario = parsed.id || parsed.id_usuario;
-        } catch(e) {}
+        } catch (e) { }
     }
 
     if (!id_usuario) {
@@ -199,12 +190,12 @@ async function guardarAjuste() {
         alert("Por favor completa los campos requeridos.");
         return;
     }
-    
+
     if (tipoAjuste !== 'ajuste' && (!cantidad || isNaN(cantidad) || cantidad <= 0)) {
         alert("La cantidad introducida no es válida.");
         return;
     }
-    
+
     if (tipoAjuste === 'ajuste' && (isNaN(nuevoStock) || nuevoStock < 0)) {
         alert("El nuevo stock no es válido.");
         return;
@@ -225,7 +216,7 @@ async function guardarAjuste() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody)
         });
-        
+
         const data = await response.json();
         if (response.ok && data.success) {
             alert('Ajuste registrado exitosamente');
@@ -234,7 +225,7 @@ async function guardarAjuste() {
         } else {
             alert('Error al ajustar: ' + (data.error || 'Error desconocido'));
         }
-    } catch(err) {
+    } catch (err) {
         console.error(err);
         alert('Error en conexión al servidor');
     }
@@ -244,11 +235,11 @@ async function verHistorial(id_insumo, nombre_insumo) {
     try {
         const response = await fetch('/api/inventario/historial/' + id_insumo);
         if (!response.ok) throw new Error('Error al obtener historial');
-        
+
         const historial = await response.json();
-        
+
         let html = `<h6 class="font-weight-bold mb-3">${nombre_insumo}</h6>`;
-        
+
         if (historial.length === 0) {
             html += '<p>No hay movimientos registrados para este insumo.</p>';
         } else {
@@ -267,7 +258,7 @@ async function verHistorial(id_insumo, nombre_insumo) {
                     </thead>
                     <tbody>
             `;
-            
+
             historial.forEach(h => {
                 const trClass = h.tipo_movimiento === 'Entrada' ? 'table-success' : (h.tipo_movimiento === 'Salida' ? 'table-danger' : 'table-warning');
                 html += `
@@ -281,18 +272,18 @@ async function verHistorial(id_insumo, nombre_insumo) {
                     </tr>
                 `;
             });
-            
+
             html += `
                     </tbody>
                 </table>
             </div>
             `;
         }
-        
+
         document.getElementById('historialContent').innerHTML = html;
         $('#historialModal').modal('show');
-        
-    } catch(err) {
+
+    } catch (err) {
         console.error(err);
         alert('Error cargando el historial.');
     }
