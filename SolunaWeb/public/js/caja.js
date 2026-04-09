@@ -66,16 +66,29 @@ function solicitarAperturaCaja() {
     document.getElementById('estadoCaja').className = 'badge badge-danger';
     document.getElementById('estadoCaja').innerText = 'Caja Cerrada';
 
-    // Crear modal de apertura dinámicamente si no existe o usar uno existente
-    // Por simplicidad, usaremos un prompt o un modal simple inyectado
-    const monto = prompt("LA CAJA ESTÁ CERRADA.\n\nIngrese el Monto Inicial para abrir caja:");
-
-    if (monto !== null && monto.trim() !== "") {
-        abrirCaja(parseFloat(monto));
-    } else {
-        alert("Debe abrir la caja para operar.");
-        window.location.reload();
-    }
+    Swal.fire({
+        title: 'Caja Cerrada',
+        text: 'Ingrese el Monto Inicial para abrir la caja:',
+        input: 'number',
+        inputAttributes: { min: 0, step: 'any' },
+        showCancelButton: true,
+        confirmButtonText: 'Abrir Caja',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#4e73df'
+    }).then((result) => {
+        if (result.isConfirmed && result.value !== "") {
+            abrirCaja(parseFloat(result.value));
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Atención',
+                text: 'Debe abrir la caja para operar.',
+                confirmButtonColor: '#4e73df'
+            }).then(() => {
+                window.location.reload();
+            });
+        }
+    });
 }
 
 async function abrirCaja(monto) {
@@ -108,11 +121,12 @@ async function abrirCaja(monto) {
         });
 
         if (response.ok) {
-            alert('Caja abierta correctamente');
-            window.location.reload();
+            Swal.fire('Éxito!', 'Caja abierta correctamente', 'success').then(() => {
+                window.location.reload();
+            });
         } else {
             const err = await response.json();
-            alert('Error: ' + (err.error || 'Desconocido'));
+            Swal.fire('Error', 'Error: ' + (err.error || 'Desconocido'), 'error');
         }
     } catch (error) {
         console.error('Error completo:', error);
@@ -364,10 +378,11 @@ async function cerrarCaja() {
         });
 
         if (cierreResponse.ok) {
-            alert('Caja cerrada correctamente. Se generó el reporte final.');
-            window.location.reload();
+            Swal.fire('Éxito!', 'Caja cerrada correctamente. Se generó el reporte final.', 'success').then(() => {
+                window.location.reload();
+            });
         } else {
-            alert('Error al cerrar caja');
+            Swal.fire('Error', 'Error al cerrar caja', 'error');
         }
 
     } catch (error) {

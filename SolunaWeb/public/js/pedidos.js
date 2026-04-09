@@ -346,23 +346,32 @@ $(document).ready(function () {
         });
         
         $('.btn-eliminar').off('click').on('click', function() {
-            if (!confirm('¿Estás seguro de eliminar este producto del pedido?')) {
-                return;
-            }
-            
             const fila = $(this).closest('tr');
             const idDetalle = fila.data('id');
             
-            $.ajax({
-                url: `/api/detalle-pedido/${idDetalle}`,
-                method: 'DELETE',
-                success: function(response) {
-                    mostrarAlerta(response.message, 'success');
-                    cargarDetallePedido(pedidoActualId);
-                },
-                error: function(error) {
-                    console.error('Error al eliminar:', error);
-                    mostrarAlerta('Error al eliminar producto', 'danger');
+            Swal.fire({
+                title: 'Eliminar producto',
+                text: '¿Estás seguro de eliminar este producto del pedido?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#e74a3b',
+                cancelButtonColor: '#858796',
+                confirmButtonText: 'Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: `/api/detalle-pedido/${idDetalle}`,
+                        method: 'DELETE',
+                        success: function(response) {
+                            mostrarAlerta(response.message, 'success');
+                            cargarDetallePedido(pedidoActualId);
+                        },
+                        error: function(error) {
+                            console.error('Error al eliminar:', error);
+                            mostrarAlerta('Error al eliminar producto', 'danger');
+                        }
+                    });
                 }
             });
         });

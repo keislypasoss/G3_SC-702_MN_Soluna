@@ -183,25 +183,36 @@ function crearTarjetaPedido(pedido) {
     return col;
 }
 
-async function cambiarEstadoPedido(idPedido, nuevoEstado) {
-    if (!confirm(`¿Cambiar estado del pedido #${idPedido} a "${nuevoEstado}"?`)) return;
+function cambiarEstadoPedido(idPedido, nuevoEstado) {
+    Swal.fire({
+        title: 'Confirmar Acción',
+        text: `¿Cambiar estado del pedido #${idPedido} a "${nuevoEstado}"?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#4e73df',
+        cancelButtonColor: '#858796',
+        confirmButtonText: 'Sí, cambiar',
+        cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch(`/api/pedidos/${idPedido}/estado`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estado: nuevoEstado })
+                });
 
-    try {
-        const response = await fetch(`/api/pedidos/${idPedido}/estado`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estado: nuevoEstado })
-        });
-
-        if (response.ok) {
-            cargarPedidosCocina(); // Recargar todo
-        } else {
-            alert('Error al actualizar estado');
+                if (response.ok) {
+                    cargarPedidosCocina(); // Recargar todo
+                } else {
+                    alert('Error al actualizar estado');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión');
+            }
         }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error de conexión');
-    }
+    });
 }
 
 function actualizarContadores(pedidos) {

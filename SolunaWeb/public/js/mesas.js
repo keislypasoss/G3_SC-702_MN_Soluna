@@ -3,6 +3,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     cargarMesas();
     cargarProductosMenu(); // Pre-cargar productos para el modal de nuevo pedido
+    
+    // Polling background silence updates cada 15 segundos
+    setInterval(() => cargarMesas(true), 15000);
 });
 
 let mesasCache = [];
@@ -10,37 +13,22 @@ let productosCache = [];
 let carritoPedido = [];
 
 // Cargar estado de las mesas
-async function cargarMesas() {
-    // Simulamos carga de mesas (o idealmente API)
-    // Como no vi endpoint de mesas, voy a asumir o crear uno mock en JS por ahora si falla
-    // O mejor, intentemos usar un endpoint si existe. En server.js no vi GET /api/mesas explícito pero puede estar.
-    // Si no está, usaré datos mockeados para visualizar.
-
-    // NOTA: Para el propósito de "100% funcional" asumo que las mesas existen en BD.
-    // Si no hay endpoint, usaré un array fijo de 10 mesas.
-
+async function cargarMesas(isPolling = false) {
     const grid = document.getElementById('gridMesas');
-    grid.innerHTML = '<div class="col-12 text-center"><i class="fas fa-spinner fa-spin"></i> Cargando mesas...</div>';
+    
+    if (!isPolling) {
+        grid.innerHTML = '<div class="col-12 text-center"><i class="fas fa-spinner fa-spin"></i> Cargando mesas...</div>';
+    }
 
     try {
-        // Intento de llamar a API, si falla uso mock
-        let mesas = [];
-        try {
-            const response = await fetch('/api/mesas'); // Verificaré si existe este endpoint luego, si no, fallará y catch usará mock
-            if (response.ok) mesas = await response.json();
-            else throw new Error('API Mesas no disponible');
-        } catch (e) {
-            console.warn('Usando mesas mockeadas:', e);
-            // Mock data
-            for (let i = 1; i <= 12; i++) {
-                mesas.push({
-                    id_mesa: i,
-                    numero_mesa: i,
-                    capacidad: 4,
-                    estado: 'Libre', // Libre, Ocupada, Reservada
-                    ubicacion: i <= 6 ? 'Salón Principal' : 'Terraza'
-                });
-            }
+        const response = await fetch('/api/mesas');
+        if (!response.ok) throw new Error('API Mesas no disponible o error HTTP');
+        
+        let mesas = await response.json();
+        
+        if (mesas.length === 0) {
+            grid.innerHTML = '<div class="col-12 text-center text-muted">No hay mesas registradas en la base de datos</div>';
+            return;
         }
 
         mesasCache = mesas;
@@ -49,20 +37,19 @@ async function cargarMesas() {
 
     } catch (error) {
         console.error('Error al cargar mesas:', error);
-        grid.innerHTML = '<div class="col-12 text-danger">Error al cargar mesas</div>';
+        grid.innerHTML = '<div class="col-12 text-danger">Error al cargar mesas (' + error.message + ')</div>';
     }
 }
 
 function renderizarMesas(mesas) {
     const grid = document.getElementById('gridMesas');
+    if (!grid) return;
     grid.innerHTML = '';
 
-    const filtroEstado = document.getElementById('filtroEstado').value;
-    const filtroUbicacion = document.getElementById('filtroUbicacion').value;
+    const filtroEstado = document.getElementById('filtroEstado') ? document.getElementById('filtroEstado').value : '';
 
     const mesasFiltradas = mesas.filter(m => {
         if (filtroEstado && m.estado.toLowerCase() !== filtroEstado) return false;
-        if (filtroUbicacion && m.ubicacion !== filtroUbicacion) return false;
         return true;
     });
 
@@ -75,7 +62,6 @@ function renderizarMesas(mesas) {
             <div class="mesa-card ${estadoClass}" onclick="abrirDetalleMesa(${mesa.id_mesa})">
                 <div class="mesa-numero">${mesa.numero_mesa}</div>
                 <div class="mesa-capacidad"><i class="fas fa-users"></i> ${mesa.capacidad} pers.</div>
-                <div class="mesa-ubicacion small text-muted">${mesa.ubicacion}</div>
                 <div class="mesa-estado font-weight-bold mt-2">${mesa.estado}</div>
                 ${mesa.estado === 'Ocupada' ? '<div class="mesa-tiempo"><i class="far fa-clock"></i> 12 min</div>' : ''}
             </div>
@@ -95,19 +81,16 @@ function abrirDetalleMesa(idMesa) {
     const btnPedido = document.getElementById('btnNuevoPedido');
     const btnLiberar = document.getElementById('btnLiberarMesa');
 
-    modalTitle.innerText = `Mesa ${mesa.numero_mesa} - ${mesa.ubicacion}`;
+    modalTitle.innerText = `Mesa ${mesa.numero_mesa}`;
 
     let html = `
         <div class="text-center mb-4">
             <h1 class="display-4 text-gray-800">${mesa.numero_mesa}</h1>
             <span class="badge badge-${getBadgeClass(mesa.estado)} px-3 py-2">${mesa.estado}</span>
         </div>
-        <div class="row">
-            <div class="col-6">
+        <div class="row text-center border-top pt-3">
+            <div class="col-12">
                 <strong>Capacidad:</strong> ${mesa.capacidad} personas
-            </div>
-            <div class="col-6">
-                <strong>Ubicación:</strong> ${mesa.ubicacion}
             </div>
         </div>
     `;
@@ -179,26 +162,37 @@ document.getElementById('btnConfirmarOcupar').addEventListener('click', async ()
     }
 });
 
-async function liberarMesa(idMesa) {
-    if (!confirm('¿Liberar esta mesa? Asegúrese de que el pago se haya procesado.')) return;
+function liberarMesa(idMesa) {
+    Swal.fire({
+        title: '¿Liberar esta mesa?',
+        text: 'Asegúrese de que el pago se haya procesado.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e74a3b',
+        cancelButtonColor: '#858796',
+        confirmButtonText: 'Sí, liberar',
+        cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+        if (result.isConfirmed) {
+            try {
+                const response = await fetch(`/api/mesas/${idMesa}/estado`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ estado: 'Libre' })
+                });
 
-    try {
-        const response = await fetch(`/api/mesas/${idMesa}/estado`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ estado: 'Libre' })
-        });
-
-        if (response.ok) {
-            $('#detalleMesaModal').modal('hide');
-            cargarMesas(); // Recargar desde API
-        } else {
-            alert('Error al liberar mesa');
+                if (response.ok) {
+                    $('#detalleMesaModal').modal('hide');
+                    cargarMesas(); // Recargar desde API
+                } else {
+                    alert('Error al liberar mesa');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error de conexión al liberar mesa');
+            }
         }
-    } catch (error) {
-        console.error('Error:', error);
-        alert('Error de conexión al liberar mesa');
-    }
+    });
 }
 
 

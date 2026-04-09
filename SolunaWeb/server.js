@@ -344,6 +344,69 @@ app.post('/api/productos/:id/toggle-disponibilidad', async (req, res) => {
     }
 });
 
+// OBTENER TODAS LAS CATEGORÍAS
+app.get('/api/categorias', async (req, res) => {
+    try {
+        const pool = await getConnection();
+        const result = await pool.request().query('SELECT id_categoria, nombre FROM Categorias ORDER BY nombre');
+        res.json(result.recordset);
+    } catch (err) {
+        console.error('Error en /api/categorias:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// CREAR NUEVO PRODUCTO
+app.post('/api/productos', async (req, res) => {
+    const { nombre, descripcion, precio, id_categoria, es_disponible } = req.body;
+    try {
+        const pool = await getConnection();
+        await pool.request()
+            .input('nombre', sql.NVarChar, nombre)
+            .input('descripcion', sql.NVarChar, descripcion)
+            .input('precio', sql.Decimal, precio)
+            .input('id_categoria', sql.Int, id_categoria)
+            .input('es_disponible', sql.Bit, es_disponible ? 1 : 0)
+            .query(`
+                INSERT INTO Productos (nombre_producto, descripcion, precio, id_categoria, es_disponible)
+                VALUES (@nombre, @descripcion, @precio, @id_categoria, @es_disponible)
+            `);
+        res.json({ success: true, message: 'Producto creado exitosamente' });
+    } catch (err) {
+        console.error('Error creando producto:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// ACTUALIZAR PRODUCTO EXISTENTE
+app.put('/api/productos/:id', async (req, res) => {
+    const { id } = req.params;
+    const { nombre, descripcion, precio, id_categoria, es_disponible } = req.body;
+    try {
+        const pool = await getConnection();
+        await pool.request()
+            .input('id', sql.Int, id)
+            .input('nombre', sql.NVarChar, nombre)
+            .input('descripcion', sql.NVarChar, descripcion)
+            .input('precio', sql.Decimal, precio)
+            .input('id_categoria', sql.Int, id_categoria)
+            .input('es_disponible', sql.Bit, es_disponible ? 1 : 0)
+            .query(`
+                UPDATE Productos 
+                SET nombre_producto = @nombre,
+                    descripcion = @descripcion,
+                    precio = @precio,
+                    id_categoria = @id_categoria,
+                    es_disponible = @es_disponible
+                WHERE id_producto = @id
+            `);
+        res.json({ success: true, message: 'Producto actualizado exitosamente' });
+    } catch (err) {
+        console.error('Error actualizando producto:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 
 // obtener el detalle de un pedido específico
 app.get('/api/pedidos/:id/detalle', async (req, res) => {
@@ -760,14 +823,6 @@ app.put('/api/pedidos/:id/entregar', async (req, res) => {
                 WHERE id_pedido = @id
             `);
 
-        // Si el pedido tenía mesa, liberarla
-        await pool.request()
-            .input('id', sql.Int, id)
-            .query(`
-                UPDATE Mesas 
-                SET estado = 'Libre' 
-                WHERE id_mesa = (SELECT id_mesa FROM Pedidos WHERE id_pedido = @id)
-            `);
 
         res.json({
             success: true,
@@ -1240,6 +1295,15 @@ app.post('/api/facturas', async (req, res) => {
             .input('id_pedido', sql.Int, id_pedido)
             .query("UPDATE Pedidos SET estado = 'Pagado' WHERE id_pedido = @id_pedido");
 
+        // 4. Si el pedido tenía mesa, liberarla automáticamente
+        await pool.request()
+            .input('id_pedido', sql.Int, id_pedido)
+            .query(`
+                UPDATE Mesas 
+                SET estado = 'Libre' 
+                WHERE id_mesa = (SELECT id_mesa FROM Pedidos WHERE id_pedido = @id_pedido)
+            `);
+
         res.json({ success: true, message: 'Factura creada y pedido pagado' });
     } catch (err) {
         console.error(err);
@@ -1437,7 +1501,196 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
+// ==========================================
+// REPORTES Y ESTADÍSTICAS
+// ==========================================
 
+// 1. KPIs Generales de Ventas
+app.get('/api/reportes/ventas-kpi', async (req, res) => {
+    try {
+        const { fechaInicio, fechaFin } = req.query;
+        let queryStr = `
+            SELECT 
+                ISNULL(SUM(f.total_pagar), 0) as ventasTotales,
+                COUNT(*) as totalPedidos,
+                ISNULL(AVG(f.total_pagar), 0) as ticketPromedio
+            FROM Facturas f
+            INNER JOIN Cajas_Sesiones cs ON f.id_sesion_caja = cs.id_sesion
+            WHERE 1=1
+        `;
+        
+        if (fechaInicio && fechaFin) {
+            queryStr += ` AND CAST(cs.fecha_apertura AS DATE) BETWEEN CAST(@fechaInicio AS DATE) AND CAST(@fechaFin AS DATE)`;
+        }
+
+        const pool = await getConnection();
+        const request = pool.request();
+        
+        if (fechaInicio && fechaFin) {
+            request.input('fechaInicio', sql.Date, fechaInicio)
+                   .input('fechaFin', sql.Date, fechaFin);
+        }
+
+        const result = await request.query(queryStr);
+        
+        const data = result.recordset[0];
+        res.json({
+            ventasTotales: data.ventasTotales,
+            totalPedidos: data.totalPedidos,
+            ticketPromedio: data.ticketPromedio,
+            clientesAtendidos: data.totalPedidos // Estimado
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2. Ventas por Día (Para Gráfico de Líneas)
+app.get('/api/reportes/ventas-por-dia', async (req, res) => {
+    try {
+        const { fechaInicio, fechaFin } = req.query;
+        let queryStr = `
+            SELECT 
+                CAST(cs.fecha_apertura AS DATE) as fecha,
+                SUM(f.total_pagar) as total
+            FROM Facturas f
+            INNER JOIN Cajas_Sesiones cs ON f.id_sesion_caja = cs.id_sesion
+            WHERE 1=1
+        `;
+
+        if (fechaInicio && fechaFin) {
+            queryStr += ` AND CAST(cs.fecha_apertura AS DATE) BETWEEN CAST(@fechaInicio AS DATE) AND CAST(@fechaFin AS DATE)`;
+        }
+
+        queryStr += ` GROUP BY CAST(cs.fecha_apertura AS DATE) ORDER BY fecha ASC`;
+
+        const pool = await getConnection();
+        const request = pool.request();
+
+        if (fechaInicio && fechaFin) {
+            request.input('fechaInicio', sql.Date, fechaInicio)
+                   .input('fechaFin', sql.Date, fechaFin);
+        }
+
+        const result = await request.query(queryStr);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 3. Top Productos más vendidos
+app.get('/api/reportes/top-productos', async (req, res) => {
+    try {
+        const { fechaInicio, fechaFin } = req.query;
+        let queryStr = `
+            SELECT TOP 10
+                p.nombre_producto,
+                SUM(dp.cantidad) as cantidad,
+                SUM(dp.cantidad * dp.precio_unitario) as total
+            FROM Detalle_Pedidos dp
+            INNER JOIN Productos p ON dp.id_producto = p.id_producto
+            INNER JOIN Pedidos ped ON dp.id_pedido = ped.id_pedido
+            INNER JOIN Facturas f ON ped.id_pedido = f.id_pedido
+            INNER JOIN Cajas_Sesiones cs ON f.id_sesion_caja = cs.id_sesion
+            WHERE 1=1
+        `;
+
+        if (fechaInicio && fechaFin) {
+            queryStr += ` AND CAST(cs.fecha_apertura AS DATE) BETWEEN CAST(@fechaInicio AS DATE) AND CAST(@fechaFin AS DATE)`;
+        }
+
+        queryStr += ` GROUP BY p.nombre_producto ORDER BY cantidad DESC`;
+
+        const pool = await getConnection();
+        const request = pool.request();
+
+        if (fechaInicio && fechaFin) {
+            request.input('fechaInicio', sql.Date, fechaInicio)
+                   .input('fechaFin', sql.Date, fechaFin);
+        }
+
+        const result = await request.query(queryStr);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 4. Ventas por Categoría
+app.get('/api/reportes/ventas-por-categoria', async (req, res) => {
+    try {
+        const { fechaInicio, fechaFin } = req.query;
+        let queryStr = `
+            SELECT 
+                ISNULL(c.nombre, 'Sin Categoría') as categoria,
+                SUM(dp.cantidad) as cantidad,
+                SUM(dp.cantidad * dp.precio_unitario) as total
+            FROM Detalle_Pedidos dp
+            INNER JOIN Productos p ON dp.id_producto = p.id_producto
+            LEFT JOIN Categorias c ON p.id_categoria = c.id_categoria
+            INNER JOIN Pedidos ped ON dp.id_pedido = ped.id_pedido
+            INNER JOIN Facturas f ON ped.id_pedido = f.id_pedido
+            INNER JOIN Cajas_Sesiones cs ON f.id_sesion_caja = cs.id_sesion
+            WHERE 1=1
+        `;
+
+        if (fechaInicio && fechaFin) {
+            queryStr += ` AND CAST(cs.fecha_apertura AS DATE) BETWEEN CAST(@fechaInicio AS DATE) AND CAST(@fechaFin AS DATE)`;
+        }
+
+        queryStr += ` GROUP BY c.nombre ORDER BY total DESC`;
+
+        const pool = await getConnection();
+        const request = pool.request();
+
+        if (fechaInicio && fechaFin) {
+            request.input('fechaInicio', sql.Date, fechaInicio)
+                   .input('fechaFin', sql.Date, fechaFin);
+        }
+
+        const result = await request.query(queryStr);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 5. Ventas por Hora del Día
+app.get('/api/reportes/ventas-por-hora', async (req, res) => {
+    try {
+        const { fechaInicio, fechaFin } = req.query;
+        // Asume que la caja sesión apertura es la fecha de la factura para efectos de agrupación si no hay fecha_factura.
+        // Pero usamos la hora en que se creó el pedido (fecha_pedido).
+        let queryStr = `
+            SELECT 
+                DATEPART(hour, ped.fecha_pedido) as hora,
+                ISNULL(SUM(f.total_pagar), 0) as total
+            FROM Facturas f
+            INNER JOIN Pedidos ped ON f.id_pedido = ped.id_pedido
+            WHERE 1=1
+        `;
+
+        if (fechaInicio && fechaFin) {
+            queryStr += ` AND CAST(ped.fecha_pedido AS DATE) BETWEEN CAST(@fechaInicio AS DATE) AND CAST(@fechaFin AS DATE)`;
+        }
+
+        queryStr += ` GROUP BY DATEPART(hour, ped.fecha_pedido) ORDER BY hora ASC`;
+
+        const pool = await getConnection();
+        const request = pool.request();
+
+        if (fechaInicio && fechaFin) {
+            request.input('fechaInicio', sql.Date, fechaInicio)
+                   .input('fechaFin', sql.Date, fechaFin);
+        }
+
+        const result = await request.query(queryStr);
+        res.json(result.recordset);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
 
 app.get('/', (req, res) => {
 

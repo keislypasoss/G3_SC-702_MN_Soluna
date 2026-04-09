@@ -50,10 +50,10 @@
             </li>
 
             <!-- Divider -->
-            <hr class="sidebar-divider">
+            <hr class="sidebar-divider" data-roles="Cajero, Mesero, Administrador">
 
             <!-- Heading -->
-            <div class="sidebar-heading">
+            <div class="sidebar-heading" data-roles="Cajero, Mesero, Administrador">
                 Gestión de Pedidos
             </div>
 
@@ -82,10 +82,10 @@
             </li>
 
             <!-- Divider -->
-            <hr class="sidebar-divider">
+            <hr class="sidebar-divider" data-roles="Cajero, Cocinero, Administrador">
 
             <!-- Heading -->
-            <div class="sidebar-heading">
+            <div class="sidebar-heading" data-roles="Cajero, Cocinero, Administrador">
                 Operaciones
             </div>
 
@@ -114,10 +114,10 @@
             </li>
 
             <!-- Divider -->
-            <hr class="sidebar-divider">
+            <hr class="sidebar-divider" data-roles="Administrador">
 
             <!-- Heading -->
-            <div class="sidebar-heading">
+            <div class="sidebar-heading" data-roles="Administrador">
                 Administración
             </div>
 
@@ -126,14 +126,6 @@
                 <a class="nav-link" href="usuarios.html">
                     <i class="fas fa-fw fa-users"></i>
                     <span>Usuarios</span>
-                </a>
-            </li>
-
-            <!-- Nav Item - Gestión de Menú (Administrador) -->
-            <li class="nav-item" data-roles="Administrador">
-                <a class="nav-link" href="productos.html">
-                    <i class="fas fa-fw fa-utensils"></i>
-                    <span>Gestión de Menú</span>
                 </a>
             </li>
 
@@ -256,8 +248,8 @@
                     <!-- Page Heading -->
                     <div class="d-sm-flex align-items-center justify-content-between mb-4">
                         <h1 class="h3 mb-0 text-gray-800">Dashboard</h1>
-                        <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
-                            <i class="fas fa-download fa-sm text-white-50"></i> Generar Reporte
+                        <a href="/reportes.html" id="btnGenerarReporte" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                            <i class="fas fa-chart-bar fa-sm text-white-50"></i> Ver Reportes
                         </a>
                     </div>
 
@@ -500,6 +492,9 @@
     <!-- Script personalizado para dashboard -->
     <script src="js/dashboard-soluna.js"></script>
     <script src="js/auth-guard.js"></script>
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 
 </html>

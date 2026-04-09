@@ -104,10 +104,10 @@
             </li>
 
             <!-- Divider -->
-            <hr class="sidebar-divider">
+            <hr class="sidebar-divider" data-roles="Cajero, Mesero, Administrador">
 
             <!-- Heading -->
-            <div class="sidebar-heading">
+            <div class="sidebar-heading" data-roles="Cajero, Mesero, Administrador">
                 Gestión de Pedidos
             </div>
 
@@ -136,10 +136,10 @@
             </li>
 
             <!-- Divider -->
-            <hr class="sidebar-divider">
+            <hr class="sidebar-divider" data-roles="Cajero, Cocinero, Administrador">
 
             <!-- Heading -->
-            <div class="sidebar-heading">
+            <div class="sidebar-heading" data-roles="Cajero, Cocinero, Administrador">
                 Operaciones
             </div>
 
@@ -168,10 +168,10 @@
             </li>
 
             <!-- Divider -->
-            <hr class="sidebar-divider">
+            <hr class="sidebar-divider" data-roles="Administrador">
 
             <!-- Heading -->
-            <div class="sidebar-heading">
+            <div class="sidebar-heading" data-roles="Administrador">
                 Administración
             </div>
 
@@ -180,14 +180,6 @@
                 <a class="nav-link" href="usuarios.html">
                     <i class="fas fa-fw fa-users"></i>
                     <span>Usuarios</span>
-                </a>
-            </li>
-
-            <!-- Nav Item - Gestión de Menú (Administrador) -->
-            <li class="nav-item" data-roles="Administrador">
-                <a class="nav-link" href="productos.html">
-                    <i class="fas fa-fw fa-utensils"></i>
-                    <span>Gestión de Menú</span>
                 </a>
             </li>
 
@@ -435,6 +427,9 @@
     <script src="js/cocina.js"></script>
     <script src="js/auth-guard.js"></script>
 
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 
 </html>

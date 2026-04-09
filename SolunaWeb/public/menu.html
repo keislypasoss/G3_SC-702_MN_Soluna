@@ -53,15 +53,15 @@
             </li>
 
             <!-- Divider -->
-            <hr class="sidebar-divider">
+            <hr class="sidebar-divider" data-roles="Cajero, Mesero, Administrador">
 
             <!-- Heading -->
-            <div class="sidebar-heading">
+            <div class="sidebar-heading" data-roles="Cajero, Mesero, Administrador">
                 Gestión de Pedidos
             </div>
 
             <!-- Nav Item - Pedidos (Cajero) -->
-            <li class="nav-item" data-roles="Cajero">
+            <li class="nav-item" data-roles="Cajero, Administrador">
                 <a class="nav-link" href="pedidos.html">
                     <i class="fas fa-fw fa-clipboard-list"></i>
                     <span>Pedidos</span>
@@ -77,7 +77,7 @@
             </li>
 
             <!-- Nav Item - Control de Salón (Mesero) -->
-            <li class="nav-item" data-roles="Mesero">
+            <li class="nav-item" data-roles="Mesero, Administrador">
                 <a class="nav-link" href="mesas.html">
                     <i class="fas fa-fw fa-chair"></i>
                     <span>Control de Salón</span>
@@ -85,15 +85,15 @@
             </li>
 
             <!-- Divider -->
-            <hr class="sidebar-divider">
+            <hr class="sidebar-divider" data-roles="Cajero, Cocinero, Administrador">
 
             <!-- Heading -->
-            <div class="sidebar-heading">
+            <div class="sidebar-heading" data-roles="Cajero, Cocinero, Administrador">
                 Operaciones
             </div>
 
             <!-- Nav Item - Caja (Cajero) -->
-            <li class="nav-item" data-roles="Cajero">
+            <li class="nav-item" data-roles="Cajero, Administrador">
                 <a class="nav-link" href="caja.html">
                     <i class="fas fa-fw fa-cash-register"></i>
                     <span>Caja</span>
@@ -101,7 +101,7 @@
             </li>
 
             <!-- Nav Item - Cocina (Cocinero) -->
-            <li class="nav-item" data-roles="Cocinero">
+            <li class="nav-item" data-roles="Cocinero, Administrador">
                 <a class="nav-link" href="cocina.html">
                     <i class="fas fa-fw fa-fire"></i>
                     <span>Cocina</span>
@@ -117,10 +117,10 @@
             </li>
 
             <!-- Divider -->
-            <hr class="sidebar-divider">
+            <hr class="sidebar-divider" data-roles="Administrador">
 
             <!-- Heading -->
-            <div class="sidebar-heading">
+            <div class="sidebar-heading" data-roles="Administrador">
                 Administración
             </div>
 
@@ -129,14 +129,6 @@
                 <a class="nav-link" href="usuarios.html">
                     <i class="fas fa-fw fa-users"></i>
                     <span>Usuarios</span>
-                </a>
-            </li>
-
-            <!-- Nav Item - Gestión de Menú (Administrador) -->
-            <li class="nav-item" data-roles="Administrador">
-                <a class="nav-link" href="productos.html">
-                    <i class="fas fa-fw fa-utensils"></i>
-                    <span>Gestión de Menú</span>
                 </a>
             </li>
 
@@ -289,7 +281,6 @@
                                             <th>Categoría</th>
                                             <th>Precio</th>
                                             <th>Disponible</th>
-                                            <th>Stock</th>
                                             <th>Acciones</th>
                                         </tr>
                                     </thead>
@@ -400,13 +391,7 @@
                         </div>
 
                         <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="stockProducto">Stock</label>
-                                <input type="number" class="form-control" id="stockProducto" placeholder="10" min="0"
-                                    value="10">
-                            </div>
-
-                            <div class="form-group col-md-6">
+                            <div class="form-group col-md-12">
                                 <div class="custom-control custom-switch mt-4">
                                     <input type="checkbox" class="custom-control-input" id="disponibleProducto" checked>
                                     <label class="custom-control-label" for="disponibleProducto">Disponible</label>
@@ -442,6 +427,9 @@
     <script src="js/menu.js"></script>
     <script src="js/auth-guard.js"></script>
 
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 
 </html>

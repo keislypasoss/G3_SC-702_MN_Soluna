@@ -121,10 +121,10 @@
             </li>
 
             <!-- Divider -->
-            <hr class="sidebar-divider">
+            <hr class="sidebar-divider" data-roles="Cajero, Mesero, Administrador">
 
             <!-- Heading -->
-            <div class="sidebar-heading">
+            <div class="sidebar-heading" data-roles="Cajero, Mesero, Administrador">
                 Gestión de Pedidos
             </div>
 
@@ -153,10 +153,10 @@
             </li>
 
             <!-- Divider -->
-            <hr class="sidebar-divider">
+            <hr class="sidebar-divider" data-roles="Cajero, Cocinero, Administrador">
 
             <!-- Heading -->
-            <div class="sidebar-heading">
+            <div class="sidebar-heading" data-roles="Cajero, Cocinero, Administrador">
                 Operaciones
             </div>
 
@@ -185,10 +185,10 @@
             </li>
 
             <!-- Divider -->
-            <hr class="sidebar-divider">
+            <hr class="sidebar-divider" data-roles="Administrador">
 
             <!-- Heading -->
-            <div class="sidebar-heading">
+            <div class="sidebar-heading" data-roles="Administrador">
                 Administración
             </div>
 
@@ -197,14 +197,6 @@
                 <a class="nav-link" href="usuarios.html">
                     <i class="fas fa-fw fa-users"></i>
                     <span>Usuarios</span>
-                </a>
-            </li>
-
-            <!-- Nav Item - Gestión de Menú (Administrador) -->
-            <li class="nav-item" data-roles="Administrador">
-                <a class="nav-link" href="productos.html">
-                    <i class="fas fa-fw fa-utensils"></i>
-                    <span>Gestión de Menú</span>
                 </a>
             </li>
 
@@ -337,15 +329,7 @@
                                 <option value="reservada">Reservadas</option>
                             </select>
                         </div>
-                        <div class="col-lg-3 col-md-6 mb-2">
-                            <select class="form-control" id="filtroUbicacion">
-                                <option value="">Todas las ubicaciones</option>
-                                <option value="Salón principal">Salón Principal</option>
-                                <option value="Terraza">Terraza</option>
-                                <option value="Área VIP">Área VIP</option>
-                            </select>
-                        </div>
-                        <div class="col-lg-6 col-md-12 text-right">
+                        <div class="col-lg-9 col-md-6 mb-2 text-right">
                             <button class="btn btn-primary" onclick="actualizarMesas()">
                                 <i class="fas fa-sync-alt"></i> Actualizar
                             </button>
@@ -492,6 +476,9 @@
     <script src="js/mesas.js"></script>
     <script src="js/auth-guard.js"></script>
 
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 
 </html>
