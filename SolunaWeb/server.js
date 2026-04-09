@@ -876,9 +876,6 @@ app.post('/api/pedidos/:id/dividir', async (req, res) => {
 
         const pool = await getConnection();
 
-        // Obtener usuario de la sesión (enviado desde el frontend via sessionStorage)
-        const idUsuario = id_usuario;
-
         // Verificar que el pedido existe
         const pedidoCheck = await pool.request()
             .input('id_pedido', sql.Int, id)
@@ -894,7 +891,7 @@ app.post('/api/pedidos/:id/dividir', async (req, res) => {
         // 1. Crear la división
         const divisionResult = await pool.request()
             .input('id_pedido', sql.Int, id)
-            .input('id_usuario', sql.Int, idUsuario)
+            .input('id_usuario', sql.Int, id_usuario)
             .input('tipo', sql.NVarChar, tipo)
             .input('personas', sql.Int, personas)
             .query(`
@@ -913,7 +910,6 @@ app.post('/api/pedidos/:id/dividir', async (req, res) => {
             const subtotalPorPersona = Number((porPersona / 1.13).toFixed(2));
             const impuestoPorPersona = Number((porPersona - subtotalPorPersona).toFixed(2));
 
-            // Crear tickets (todos iguales)
             for (let i = 1; i <= personas; i++) {
                 await pool.request()
                     .input('id_division', sql.Int, idDivision)
@@ -929,32 +925,45 @@ app.post('/api/pedidos/:id/dividir', async (req, res) => {
             console.log(` Creados ${personas} tickets iguales`);
 
         } else if (tipo === 'PorProductos') {
-            // DIVISIÓN POR PRODUCTOS
+            // DIVISIÓN POR PRODUCTOS - CORREGIDO: ahora asigna a personas diferentes
             console.log(' Procesando división por productos');
 
             // Array para guardar total por persona
             let totalesPorPersona = new Array(personas).fill(0);
+            let detallePorPersona = new Array(personas).fill(null).map(() => []);
 
-            // Procesar cada asignación
+            // Procesar cada asignación - asignar a personas en orden cíclico
+            let personaActual = 1;
+            
             for (const asig of asignaciones) {
                 // Obtener precio unitario del producto
                 const precioResult = await pool.request()
                     .input('id_detalle', sql.Int, asig.id_detalle)
                     .query('SELECT precio_unitario FROM Detalle_Pedidos WHERE id_detalle = @id_detalle');
 
-                const precioUnitario = precioResult.recordset[0].precio_unitario;
+                if (precioResult.recordset.length === 0) {
+                    console.log(`⚠️ Producto con id_detalle ${asig.id_detalle} no encontrado, omitiendo`);
+                    continue;
+                }
 
-                // Calcular monto
+                const precioUnitario = precioResult.recordset[0].precio_unitario;
                 const monto = precioUnitario * asig.cantidad;
 
-                // Asumimos que la persona es la 1 por ahora (mejorar después)
-                const persona = 1;
-                totalesPorPersona[persona - 1] += monto;
+                // Asignar a la persona actual (cíclicamente)
+                totalesPorPersona[personaActual - 1] += monto;
+                
+                // Guardar detalle
+                detallePorPersona[personaActual - 1].push({
+                    id_detalle: asig.id_detalle,
+                    cantidad: asig.cantidad,
+                    monto: monto,
+                    precio_unitario: precioUnitario
+                });
 
                 // Guardar en Detalle_Division
                 await pool.request()
                     .input('id_division', sql.Int, idDivision)
-                    .input('persona', sql.Int, persona)
+                    .input('persona', sql.Int, personaActual)
                     .input('id_detalle', sql.Int, asig.id_detalle)
                     .input('cantidad', sql.Int, asig.cantidad)
                     .input('monto', sql.Decimal(10, 2), monto)
@@ -962,6 +971,9 @@ app.post('/api/pedidos/:id/dividir', async (req, res) => {
                         INSERT INTO Detalle_Division (id_division, persona_numero, id_detalle_pedido, cantidad_asignada, monto_asignado)
                         VALUES (@id_division, @persona, @id_detalle, @cantidad, @monto)
                     `);
+
+                // Avanzar a la siguiente persona (cíclicamente)
+                personaActual = (personaActual % personas) + 1;
             }
 
             // Crear tickets basados en los totales calculados
@@ -983,7 +995,7 @@ app.post('/api/pedidos/:id/dividir', async (req, res) => {
                         `);
                 }
             }
-            console.log(` Creados tickets por productos`);
+            console.log(` Creados tickets por productos (${personas} personas)`);
         }
 
         res.json({
@@ -1019,7 +1031,7 @@ app.get('/api/divisiones/:id/tickets', async (req, res) => {
     }
 });
 
-// Generar factura para un ticket (VERSIÓN CON DEBUG)
+// Generar factura para un ticket
 app.post('/api/facturas/ticket', async (req, res) => {
     try {
         const { id_ticket, metodo_pago } = req.body;
@@ -1037,8 +1049,6 @@ app.post('/api/facturas/ticket', async (req, res) => {
                 WHERE td.id_ticket = @id_ticket
             `);
 
-        console.log(' Resultado ticket:', ticketResult.recordset);
-
         if (ticketResult.recordset.length === 0) {
             return res.status(404).json({ error: 'Ticket no encontrado' });
         }
@@ -1049,8 +1059,6 @@ app.post('/api/facturas/ticket', async (req, res) => {
         const cajaResult = await pool.request()
             .query("SELECT TOP 1 id_sesion FROM Cajas_Sesiones WHERE estado = 'Abierta'");
 
-        console.log(' Caja activa:', cajaResult.recordset);
-
         if (cajaResult.recordset.length === 0) {
             return res.status(400).json({ error: 'No hay caja abierta. Abra una caja primero.' });
         }
@@ -1058,7 +1066,6 @@ app.post('/api/facturas/ticket', async (req, res) => {
         const idSesion = cajaResult.recordset[0].id_sesion;
 
         // 3. Crear factura
-        console.log(' Creando factura...');
         const facturaResult = await pool.request()
             .input('id_pedido', sql.Int, ticket.id_pedido)
             .input('id_sesion', sql.Int, idSesion)
@@ -1073,7 +1080,6 @@ app.post('/api/facturas/ticket', async (req, res) => {
             `);
 
         const idFactura = facturaResult.recordset[0].id_factura;
-        console.log(' Factura creada ID:', idFactura);
 
         // 4. Marcar ticket como pagado
         await pool.request()
@@ -1085,8 +1091,6 @@ app.post('/api/facturas/ticket', async (req, res) => {
         const ticketsPendientes = await pool.request()
             .input('id_division', sql.Int, ticket.id_division)
             .query('SELECT COUNT(*) as pendientes FROM Tickets_Divididos WHERE id_division = @id_division AND pagado = 0');
-
-        console.log(' Tickets pendientes en división:', ticketsPendientes.recordset[0].pendientes);
 
         if (parseInt(ticketsPendientes.recordset[0].pendientes) === 0) {
             await pool.request()
@@ -1110,7 +1114,6 @@ app.post('/api/facturas/ticket', async (req, res) => {
         });
     }
 });
-
 
 // --- API ENDPOINTS PARA MESAS ---
 app.get('/api/mesas', async (req, res) => {
