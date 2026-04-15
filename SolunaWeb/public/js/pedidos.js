@@ -57,6 +57,7 @@ $(document).ready(function () {
                 // EVENTO para botón Cobrar
                 $('.btn-cobrar').off('click').on('click', function () {
                     const idPedido = $(this).data('id');
+                    pedidoActualId = idPedido; // Rastrear el ID por si decide dividir cuenta
                     const total = parseFloat($(this).data('total'));
                     $('#modalCobro').data('pedido-id', idPedido);
                     $('#totalCobro').text(total.toFixed(2));
@@ -260,9 +261,10 @@ $(document).ready(function () {
         });
     });
 
-    // DIVISIÓN DE CUENTAS
-    $(document).on('click', '#btnDividirCuenta', function () {
+    function abrirDivisionCuentas() {
         const idPedido = pedidoActualId;
+        if (!idPedido) return mostrarAlerta('Error: No se encontró el pedido', 'danger');
+
         $('#modalDividirCuenta').data('pedido-id', idPedido);
 
         $.ajax({
@@ -276,7 +278,16 @@ $(document).ready(function () {
             }
         });
         $('#modalDividirCuenta').modal('show');
+    }
+
+    // Abrir modal de dividir cuenta desde el modal de Cobro
+    $('#btnDividirDesdeCobro').click(function () {
+        $('#modalCobro').modal('hide');
+        setTimeout(abrirDivisionCuentas, 500); // 500ms para permitir que Bootstrap cierre el modal de Cobro limpiamente
     });
+
+    // DIVISIÓN DE CUENTAS
+    $(document).on('click', '#btnDividirCuenta', abrirDivisionCuentas);
 
     $('#tipoDivision').change(function () {
         const igual = $(this).val() === 'Igual';

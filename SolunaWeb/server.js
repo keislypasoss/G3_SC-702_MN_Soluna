@@ -1097,6 +1097,16 @@ app.post('/api/facturas/ticket', async (req, res) => {
                 .input('id_pedido', sql.Int, ticket.id_pedido)
                 .query("UPDATE Pedidos SET estado = 'Pagado' WHERE id_pedido = @id_pedido");
             console.log(' Pedido marcado como pagado');
+
+            // 6. Si el pedido tenía mesa, liberarla automáticamente al pagar todos los tickets
+            await pool.request()
+                .input('id_pedido', sql.Int, ticket.id_pedido)
+                .query(`
+                    UPDATE Mesas 
+                    SET estado = 'Libre' 
+                    WHERE id_mesa = (SELECT id_mesa FROM Pedidos WHERE id_pedido = @id_pedido)
+                `);
+            console.log(' Mesa liberada tras pago iterativo de tickets');
         }
 
         res.json({
@@ -1273,8 +1283,23 @@ app.get('/api/caja/cierres', async (req, res) => {
 // Crear Factura (Pago)
 app.post('/api/facturas', async (req, res) => {
     try {
-        const { id_pedido, id_sesion_caja, metodo_pago, total_pagar } = req.body;
+        const { id_pedido, metodo_pago } = req.body;
+        let { id_sesion_caja, total_pagar } = req.body;
         const pool = await getConnection();
+
+        // Obtener sesion de caja si viene vacía (ej: desde pedidos.html)
+        if (!id_sesion_caja) {
+            const cajaResult = await pool.request().query("SELECT TOP 1 id_sesion FROM Cajas_Sesiones WHERE estado = 'Abierta'");
+            if (cajaResult.recordset.length === 0) return res.status(400).json({ error: 'No hay caja abierta' });
+            id_sesion_caja = cajaResult.recordset[0].id_sesion;
+        }
+
+        // Obtener total a pagar si viene vacío
+        if (total_pagar === undefined || total_pagar === null) {
+            const pedidoResult = await pool.request().input('id_pedido', sql.Int, id_pedido).query("SELECT total FROM Pedidos WHERE id_pedido = @id_pedido");
+            if (pedidoResult.recordset.length === 0) return res.status(404).json({ error: 'Pedido no encontrado' });
+            total_pagar = pedidoResult.recordset[0].total;
+        }
 
         // 1. Calcular subtotal e impuesto (13%)
         const subtotal = total_pagar / 1.13;

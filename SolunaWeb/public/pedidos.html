@@ -462,12 +462,17 @@
                     
                     <p id="vueltoInfo" class="text-success font-weight-bold"></p>
                 </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
-                    <button class="btn btn-primary" id="btnConfirmarCobro">
-                        Confirmar Pago
-                    </button>
-                </div>
+                  <div class="modal-footer d-flex justify-content-between">
+                      <button type="button" class="btn btn-info" id="btnDividirDesdeCobro">
+                          <i class="fas fa-cut"></i> Dividir Cuenta
+                      </button>
+                      <div>
+                          <button class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                          <button class="btn btn-primary" id="btnConfirmarCobro">
+                              <i class="fas fa-check-circle"></i> Confirmar Pago
+                          </button>
+                      </div>
+                  </div>
             </div>
         </div>
     </div>
